@@ -4,9 +4,7 @@
 
 using byte = unsigned char;
 
-const std::string OK_RESULT = "ok";
-
-int bytesToInt(const std::vector<byte> &bytes)
+int bytesToInt(std::vector<byte> bytes)
 {
     int number = 0;
 

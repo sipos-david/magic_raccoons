@@ -8,7 +8,7 @@ namespace CIFF
     class Header
     {
     public:
-        static Header parseHeader();
+        static Header parseHeader(std::vector<byte> buffer);
 
         Header(char *magic, int headerSize, int contentSize, int width, int height, char *caption);
         static const int MAGIC_SIZE = 4;
