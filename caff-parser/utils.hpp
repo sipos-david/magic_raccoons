@@ -6,8 +6,15 @@
 #include <string>
 #include <fstream>
 #include <cmath>
+#include <exception>
 
 using byte = unsigned char;
+
+struct EmptyByteVectorException : std::exception {
+    [[nodiscard]] const char *what() const noexcept override {
+        return "CAFF::EmptyByteVectorException";
+    }
+};
 
 const std::string OK_RESULT = "ok";
 
