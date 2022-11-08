@@ -2,9 +2,34 @@
 
 namespace CAFF
 {
-    int parseCredits(std::vector<byte> &file) {}
+    CaffCreditsResult parseCredits(std::vector<byte> &file)
+    {
+        const int year = takeInt(file, 2);
+        const int month = takeInt(file, 1);
+        const int day = takeInt(file, 1);
+        const int hour = takeInt(file, 1);
+        const int minute = takeInt(file, 1);
+        const int creator_len = takeInt(file);
 
-    int parseAnimation(std::vector<byte> &file) {}
+        std::vector<byte> *rawCreator = take(file, creator_len);
+        char creatorArr[creator_len + 1];
+        for (size_t i = 0; i < creator_len; i++)
+        {
+            creatorArr[i] = rawCreator->at(i);
+        }
+        delete rawCreator;
+        creatorArr[creator_len] = '\0';
+
+        std::string creator(reinterpret_cast<char *>(creatorArr));
+        return {year, month, day, hour, minute, creator_len, creator, OK_RESULT};
+    }
+
+    CaffAnimationResult parseAnimation(std::vector<byte> &file)
+    {
+        const int duration = takeInt(file, 8);
+
+        return {duration, OK_RESULT};
+    }
 
     CaffHeaderResult parseCaffHeader(std::vector<byte> &file)
     {
@@ -12,7 +37,8 @@ namespace CAFF
         const int id = takeInt(file, 1);
         if (id != 1)
         {
-            return CaffHeaderResult(0, 0, "Wrong block id!");
+            std::cout << id;
+            return CaffHeaderResult(0, 0, "Wrong CAFF:Header block id!");
         }
 
         // load CAFF header
