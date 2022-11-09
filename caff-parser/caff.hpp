@@ -74,17 +74,36 @@ namespace CAFF
     {
     public:
         const int getDuration() { return duration; }
-        CaffAnimationResult(int _duration, std::string result) : ParseResult(result) { duration = _duration; }
+        const int getWidth() { return width; }
+        const int getHeight() { return height; }
+        const std::string getCaption() { return caption; }
+        const std::vector<std::string> *getTags() { return tags; }
+        const std::vector<Pixel> *getPixels() { return pixels; }
+        CaffAnimationResult(int _duration, int _width, int _height, std::string _caption, std::vector<std::string> *_tags, std::vector<Pixel> *_pixels, std::string result) : ParseResult(result)
+        {
+            duration = _duration;
+            width = _width;
+            height = _height;
+            caption = _caption;
+            tags = _tags;
+            pixels = _pixels;
+        }
 
     private:
         int duration;
+        int width;
+        int height;
+        std::string caption;
+        std::vector<std::string> *tags;
+        std::vector<Pixel> *pixels;
     };
 
-    CaffCreditsResult* parseCredits(std::vector<byte> &block);
+    CaffCreditsResult *parseCredits(std::vector<byte> &block);
 
-    CaffAnimationResult* parseAnimation(std::vector<byte> &block);
+    CaffAnimationResult *parseAnimation(std::vector<byte> &block);
 
     CaffHeaderResult parseCaffHeader(std::vector<byte> &block);
+
 }
 
 #endif // CAFF_PARSER_CAFF_HPP
