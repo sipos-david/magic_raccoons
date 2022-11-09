@@ -1,22 +1,31 @@
-#ifndef UTILS_HPP
-#define UTILS_HPP
+#ifndef CAFF_PARSER_CIFF_HPP
+#define CAFF_PARSER_CIFF_HPP
+
 #include "utils.hpp"
-#endif
+#include "ErrorOrValue.hpp"
 
 namespace CIFF
 {
     class Header
     {
     public:
-        static const Header parseHeader(std::vector<byte>::const_iterator& currentByte);
-        static int parseInt (std::vector<byte>::const_iterator& currentByte, const int size);
-        static bool parseAndCheckMagic (std::vector<byte>::const_iterator& currentByte);
-        static bool parseAndCheckContentSize (std::vector<byte>::const_iterator& currentByte);
-        static bool parseAndCheckCaption (std::vector<byte>::const_iterator& currentByte);
-        static std::vector<std::string> parseTags (std::vector<byte>::const_iterator& currentByte);
-        static bool checkTags (const std::vector<std::string>& tags);
+        class InvalidHeaderException : public std::exception
+        {
+        public:
+            char *what()
+            {
+                return "Custom C++ Exception";
+            }
+        };
+        
+        static const Header parseHeader(std::vector<byte>::const_iterator &currentByte);
+        static int parseInt(std::vector<byte>::const_iterator &currentByte, const int size);
+        static bool parseAndCheckMagic(std::vector<byte>::const_iterator &currentByte);
+        static bool isContentSizeValid(const int contentSize, const int width, const int height);
+        static ErrorOrValue<InvalidHeaderException, std::string> parseAndCheckCaption(std::vector<byte>::const_iterator &currentByte, const int headerSize);
+        static std::vector<std::string> parseTags(std::vector<byte>::const_iterator &currentByte);
+        static bool checkTags(const std::vector<std::string> &tags);
 
-        Header(const int contentSize, const std::string caption, const std::vector<std::string> tags);
         static const std::string MAGIC = "ciff";
         static const int MAGIC_SIZE = 4;
         static const int HEADERSIZE_SIZE = 8;
@@ -24,6 +33,8 @@ namespace CIFF
         static const int WIDTH_SIZE = 8;
         static const int HEIGHT_SIZE = 8;
         static const char TAG_SEPARATOR = '\0';
+
+        Header(const int contentSize, const std::string caption, const std::vector<std::string> tags);
 
     private:
         char *magic;
@@ -58,3 +69,5 @@ namespace CIFF
     };
 
 };
+
+#endif
