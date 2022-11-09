@@ -13,9 +13,9 @@ using byte = unsigned char;
 class Pixel
 {
 public:
-    int getRed() { return red; }
-    int getGreen() { return green; }
-    int getBlue() { return blue; }
+    int getRed() const { return red; }
+    int getGreen() const { return green; }
+    int getBlue() const { return blue; }
     Pixel(int _red, int _green, int _blue)
     {
         red = _red;
@@ -54,6 +54,6 @@ int takeInt(std::vector<byte> &from, int bytes = 8);
 
 std::vector<byte> *takeUntil(std::vector<byte> &from, byte until);
 
-void printTGA(std::string path, int width, int height, std::vector<Pixel> &pixels);
+void printTGA(std::string path, int width, int height, const std::vector<Pixel> *pixels);
 
 #endif // CAFF_PARSER_UTILS_H
