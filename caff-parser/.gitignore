@@ -3,3 +3,5 @@ cmake-build-debug
 .idea
 .vscode
 *.json
+caff_parser
+CMakeLists.txt
