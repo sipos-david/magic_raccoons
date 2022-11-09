@@ -1,10 +1,10 @@
 #include "caff.hpp"
 
-namespace CAFF {
-    CaffCreditsResult *parseCredits(std::vector<byte> &block) {
-        if (block.size() <= 6 + 8) {
-            return new CaffCreditsResult(0, 0, 0, 0, 0, 0, "", "Block is too small for metadata!");
-        }
+namespace CAFF
+{
+    CaffCreditsResult *parseCredits(std::vector<byte> &block)
+    {
+        // TODO check block size is exactly 6 + 8 + creator_len
 
         const int year = takeInt(block, 2);
         const int month = takeInt(block, 1);
@@ -13,12 +13,9 @@ namespace CAFF {
         const int minute = takeInt(block, 1);
         const int creator_len = takeInt(block);
 
-        if (block.size() != creator_len) {
-            return new CaffCreditsResult(0, 0, 0, 0, 0, 0, "", "Block is too small for creator!");
-        }
-
         char creatorArr[creator_len + 1];
-        for (size_t i = 0; i < creator_len; i++) {
+        for (size_t i = 0; i < creator_len; i++)
+        {
             creatorArr[i] = block.at(i);
         }
         creatorArr[creator_len] = '\0';
@@ -27,7 +24,8 @@ namespace CAFF {
         return new CaffCreditsResult(year, month, day, hour, minute, creator_len, creator, OK_RESULT);
     }
 
-    CaffAnimationResult *parseAnimation(std::vector<byte> &block) {
+    CaffAnimationResult *parseAnimation(std::vector<byte> &block)
+    {
         const int duration = takeInt(block, 8);
         std::cout << "----- CIFF:Header -----" << std::endl;
         // check CAFF magic
@@ -35,7 +33,8 @@ namespace CAFF {
         if (ciffMagic->at(0) != 0x43 ||
             ciffMagic->at(1) != 0x49 ||
             ciffMagic->at(2) != 0x46 ||
-            ciffMagic->at(3) != 0x46) {
+            ciffMagic->at(3) != 0x46)
+        {
             delete ciffMagic;
             return new CaffAnimationResult(duration, 0, 0, "", nullptr, nullptr, "Wrong CIFF magic");
         }
@@ -50,10 +49,11 @@ namespace CAFF {
         const int height = takeInt(block, 8);
         std::cout << height << std::endl;
 
-        const std::vector<byte> *captionByte = takeUntil(block,0x0A );
+        const std::vector<byte> *captionByte = takeUntil(block, 0x0A);
         const int captionSize = captionByte->size();
         char captionArr[captionSize];
-        for (size_t i = 0; i < captionSize; i++) {
+        for (size_t i = 0; i < captionSize; i++)
+        {
             captionArr[i] = captionByte->at(i);
         }
         captionArr[captionSize - 1] = '\0';
@@ -63,35 +63,42 @@ namespace CAFF {
         std::vector<byte> *tagsContent = take(block, header_size - (4 + 8 + 8 + 8 + 8 + captionSize));
         std::vector<std::string> *tags = new std::vector<std::string>();
 
-        while (tagsContent->size() != 0) {
+        while (tagsContent->size() != 0)
+        {
             const std::vector<byte> *tagByte = takeUntil(*tagsContent, 0x00);
             const int tagSize = tagByte->size();
             char tagArr[tagSize];
-            for (size_t i = 0; i < tagSize; i++) {
+            for (size_t i = 0; i < tagSize; i++)
+            {
                 tagArr[i] = tagByte->at(i);
             }
             tagArr[tagSize - 1] = '\0';
             std::string tag(reinterpret_cast<char *>(tagArr));
-            delete tagByte;
             tags->push_back(tag);
+            delete tagByte;
         }
         std::vector<Pixel> *pixels = new std::vector<Pixel>();
         int count = 0;
         int red = 0;
         int green = 0;
         int blue = 0;
-        for (int i = 0; i < width * height * 3; i++) {
-            if (count == 0) {
+        for (int i = 0; i < width * height * 3; i++)
+        {
+            if (count == 0)
+            {
                 red = block.at(i);
             }
-            if (count == 1) {
+            if (count == 1)
+            {
                 green = block.at(i);
             }
-            if (count == 2) {
+            if (count == 2)
+            {
                 blue = block.at(i);
             }
             count++;
-            if (count == 3) {
+            if (count == 3)
+            {
                 pixels->push_back(Pixel(red, green, blue));
                 count = 0;
                 red = 0;
@@ -99,23 +106,16 @@ namespace CAFF {
                 blue = 0;
             }
         }
-        /*
-        while (block.size() != 0)
-        {
-
-            int red = takeInt(block, 1);
-            int green = takeInt(block, 1);
-            int blue = takeInt(block, 1);
-            pixels->push_back(Pixel(red, green, blue));
-        }*/
 
         return new CaffAnimationResult(duration, width, height, caption, tags, pixels, OK_RESULT);
     }
 
-    CaffHeaderResult parseCaffHeader(std::vector<byte> &file) {
+    CaffHeaderResult parseCaffHeader(std::vector<byte> &file)
+    {
         // Check block id
         const int id = takeInt(file, 1);
-        if (id != 1) {
+        if (id != 1)
+        {
             std::cout << id;
             return {0, 0, "Wrong CAFF:Header block id!"};
         }
@@ -129,7 +129,8 @@ namespace CAFF {
         if (caffmagic->at(0) != 0x43 ||
             caffmagic->at(1) != 0x41 ||
             caffmagic->at(2) != 0x46 ||
-            caffmagic->at(3) != 0x46) {
+            caffmagic->at(3) != 0x46)
+        {
             delete caffmagic;
             delete rawHeader;
             return {0, 0, "Wrong CAFF Magic!"};
