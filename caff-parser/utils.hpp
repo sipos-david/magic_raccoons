@@ -10,14 +10,15 @@
 
 using byte = unsigned char;
 
-class Pixel
-{
+class Pixel {
 public:
     int getRed() const { return red; }
+
     int getGreen() const { return green; }
+
     int getBlue() const { return blue; }
-    Pixel(int _red, int _green, int _blue)
-    {
+
+    Pixel(int _red, int _green, int _blue) {
         red = _red;
         green = _green;
         blue = _blue;
@@ -28,18 +29,15 @@ private:
     int green;
     int blue;
 };
-struct EmptyByteVectorException : std::exception
-{
-    [[nodiscard]] const char *what() const noexcept override
-    {
+
+struct EmptyByteVectorException : std::exception {
+    [[nodiscard]] const char *what() const noexcept override {
         return "CAFF::EmptyByteVectorException";
     }
 };
 
-struct MultipleCreditsException : std::exception
-{
-    [[nodiscard]] const char *what() const noexcept override
-    {
+struct MultipleCreditsException : std::exception {
+    [[nodiscard]] const char *what() const noexcept override {
         return "CAFF::MultipleCreditsException";
     }
 };

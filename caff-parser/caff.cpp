@@ -2,7 +2,9 @@
 
 namespace CAFF {
     CaffCreditsResult *parseCredits(std::vector<byte> &block) {
-        // TODO check block size is exactly 6 + 8 + creator_len
+        if (block.size() <= 6 + 8) {
+            return new CaffCreditsResult(0, 0, 0, 0, 0, 0, "", "Block is too small for metadata!");
+        }
 
         const int year = takeInt(block, 2);
         const int month = takeInt(block, 1);
@@ -10,6 +12,10 @@ namespace CAFF {
         const int hour = takeInt(block, 1);
         const int minute = takeInt(block, 1);
         const int creator_len = takeInt(block);
+
+        if (block.size() != creator_len) {
+            return new CaffCreditsResult(0, 0, 0, 0, 0, 0, "", "Block is too small for creator!");
+        }
 
         char creatorArr[creator_len + 1];
         for (size_t i = 0; i < creator_len; i++) {
@@ -44,7 +50,7 @@ namespace CAFF {
         const int height = takeInt(block, 8);
         std::cout << height << std::endl;
 
-        const std::vector<byte> *captionByte = takeUntil(block, 0x0A);
+        const std::vector<byte> *captionByte = takeUntil(block,0x0A );
         const int captionSize = captionByte->size();
         char captionArr[captionSize];
         for (size_t i = 0; i < captionSize; i++) {
@@ -66,8 +72,8 @@ namespace CAFF {
             }
             tagArr[tagSize - 1] = '\0';
             std::string tag(reinterpret_cast<char *>(tagArr));
-            tags->push_back(tag);
             delete tagByte;
+            tags->push_back(tag);
         }
         std::vector<Pixel> *pixels = new std::vector<Pixel>();
         int count = 0;

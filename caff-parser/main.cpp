@@ -9,6 +9,12 @@ std::vector<byte> loadFile(std::string const &filepath) {
     return buffer;
 }
 
+void writeJsonError(std::ofstream &outFile, const std::string &error) {
+    outFile << "{" << std::endl;
+    outFile << "\t\"error\":" << error << std::endl;
+    outFile << "\t}" << std::endl;
+}
+
 void writeJsonCredits(std::ofstream &outFile, CAFF::CaffCreditsResult *cResult) {
     outFile << "{" << std::endl;
     outFile << "\t\"credits\":" << std::endl;
@@ -44,6 +50,17 @@ void writeJsonAnimation(std::ofstream &outFile, std::vector<CAFF::CaffAnimationR
     outFile.close();
 }
 
+void clean(CAFF::CaffCreditsResult *cResult, std::vector<CAFF::CaffAnimationResult *> animations) {
+
+    delete cResult;
+
+    for (int i = 0; i < animations.size(); i++) {
+        delete animations[i]->getTags();
+        delete animations[i]->getPixels();
+        delete animations[i];
+    }
+}
+
 int main(int argc, char const *argv[]) {
     // argv[1] => input file
     // argv[2] => output folder (preview.tga, metadata.json)
@@ -54,6 +71,7 @@ int main(int argc, char const *argv[]) {
     }
 
     // TODO check file write permissions
+    // HINT: try to write file, if fails no permission
 
     std::string filename = argv[2];
     std::regex file_regex("^(?!.*_).*\.json$");
@@ -126,10 +144,14 @@ int main(int argc, char const *argv[]) {
         }
     }
     catch (EmptyByteVectorException &e) {
-        // TODO write error in json
+        writeJsonError(outFile, e.what());
+        clean(cResult, animations);
+        return 1;
     }
     catch (MultipleCreditsException &e) {
-        // TODO write error in json
+        writeJsonError(outFile, e.what());
+        clean(cResult, animations);
+        return 1;
     }
 
     // TODO write preview.tga, metadata.json
@@ -137,13 +159,7 @@ int main(int argc, char const *argv[]) {
     writeJsonCredits(outFile, cResult);
     writeJsonAnimation(outFile, animations);
 
-    delete cResult;
-
-    for (int i = 0; i < animations.size(); i++) {
-        delete animations[i]->getTags();
-        delete animations[i]->getPixels();
-        delete animations[i];
-    }
+    clean(cResult, animations);
 
     return 0;
 }
