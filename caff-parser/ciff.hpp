@@ -8,9 +8,16 @@ namespace CIFF
     class Header
     {
     public:
-        static Header parseHeader(std::vector<byte> buffer);
+        static const Header parseHeader(std::vector<byte>::const_iterator& currentByte);
+        static int parseInt (std::vector<byte>::const_iterator& currentByte, const int size);
+        static bool parseAndCheckMagic (std::vector<byte>::const_iterator& currentByte);
+        static bool parseAndCheckContentSize (std::vector<byte>::const_iterator& currentByte);
+        static bool parseAndCheckCaption (std::vector<byte>::const_iterator& currentByte);
+        static std::vector<std::string> parseTags (std::vector<byte>::const_iterator& currentByte);
+        static bool checkTags (const std::vector<std::string>& tags);
 
-        Header(char *magic, int headerSize, int contentSize, int width, int height, char *caption);
+        Header(const int contentSize, const std::string caption, const std::vector<std::string> tags);
+        static const std::string MAGIC = "ciff";
         static const int MAGIC_SIZE = 4;
         static const int HEADERSIZE_SIZE = 8;
         static const int CONTENTSIZE_SIZE = 8;
@@ -50,4 +57,4 @@ namespace CIFF
         int actualContentSize;
     };
 
-}
+};
