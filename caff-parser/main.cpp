@@ -118,6 +118,17 @@ int main(int argc, char const *argv[])
                 CAFF::CaffAnimationResult *aResult = CAFF::parseAnimation(*block);
                 std::cout << "----- CAFF:Animation -----" << std::endl;
                 std::cout << aResult->getDuration() << std::endl;
+                std::cout << aResult->getWidth() << std::endl;
+                std::cout << aResult->getHeight() << std::endl;
+                std::cout << aResult->getCaption() << std::endl;
+                if (aResult->getTags() != nullptr)
+                {
+                    for (int i = 0; i < aResult->getTags()->size(); i++)
+                    {
+                        std::cout << aResult->getTags()->at(i) << std::endl;
+                    }
+                }
+
                 std::cout << aResult->getResult() << std::endl;
 
                 if (aResult->getResult() == OK_RESULT)
@@ -151,6 +162,8 @@ int main(int argc, char const *argv[])
 
     for (int i = 0; i < animations.size(); i++)
     {
+        delete animations[i]->getTags();
+        delete animations[i]->getPixels();
         delete animations[i];
     }
 

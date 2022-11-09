@@ -16,11 +16,13 @@ std::vector<byte> *take(std::vector<byte> &from, const int elements)
 {
     auto *arr = new std::vector<byte>();
     int i = 0;
-    for (auto it = from.begin(); it < from.end() && i < elements; it++) {
+    for (auto it = from.begin(); it < from.end() && i < elements; it++)
+    {
         ++i;
         arr->push_back(*it);
     }
-    if (i  != elements) {
+    if (i != elements)
+    {
         delete arr;
         return nullptr;
     }
@@ -38,4 +40,27 @@ int takeInt(std::vector<byte> &from, const int bytes)
     const int data = bytesToInt(*rawData);
     delete rawData;
     return data;
+}
+
+std::vector<byte> *takeUntil(std::vector<byte> &from, byte until)
+{
+    auto *arr = new std::vector<byte>();
+    int i = 0;
+    bool found = false;
+    for (auto it = from.begin(); it < from.end() && !found; it++)
+    {
+        ++i;
+        arr->push_back(*it);
+        if (*it == until)
+        {
+            found = true;
+        }
+    }
+    if (!found)
+    {
+        delete arr;
+        return nullptr;
+    }
+    from.erase(from.begin(), from.begin() + i);
+    return arr;
 }

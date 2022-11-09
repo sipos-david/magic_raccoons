@@ -10,14 +10,36 @@
 
 using byte = unsigned char;
 
-struct EmptyByteVectorException : std::exception {
-    [[nodiscard]] const char *what() const noexcept override {
+class Pixel
+{
+public:
+    int getRed() { return red; }
+    int getGreen() { return green; }
+    int getBlue() { return blue; }
+    Pixel(int _red, int _green, int _blue)
+    {
+        red = _red;
+        green = _green;
+        blue = _blue;
+    }
+
+private:
+    int red;
+    int green;
+    int blue;
+};
+struct EmptyByteVectorException : std::exception
+{
+    [[nodiscard]] const char *what() const noexcept override
+    {
         return "CAFF::EmptyByteVectorException";
     }
 };
 
-struct MultipleCreditsException : std::exception {
-    [[nodiscard]] const char *what() const noexcept override {
+struct MultipleCreditsException : std::exception
+{
+    [[nodiscard]] const char *what() const noexcept override
+    {
         return "CAFF::MultipleCreditsException";
     }
 };
@@ -29,5 +51,9 @@ int bytesToInt(const std::vector<byte> &bytes);
 std::vector<byte> *take(std::vector<byte> &from, int elements);
 
 int takeInt(std::vector<byte> &from, int bytes = 8);
+
+std::vector<byte> *takeUntil(std::vector<byte> &from, byte until);
+
+void printTGA(std::string path, int width, int height, std::vector<Pixel> &pixels);
 
 #endif // CAFF_PARSER_UTILS_H

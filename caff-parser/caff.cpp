@@ -2,7 +2,7 @@
 
 namespace CAFF
 {
-    CaffCreditsResult* parseCredits(std::vector<byte> &block)
+    CaffCreditsResult *parseCredits(std::vector<byte> &block)
     {
         // TODO check block size is exactly 6 + 8 + creator_len
 
@@ -24,13 +24,69 @@ namespace CAFF
         return new CaffCreditsResult(year, month, day, hour, minute, creator_len, creator, OK_RESULT);
     }
 
-    CaffAnimationResult* parseAnimation(std::vector<byte> &block)
+    CaffAnimationResult *parseAnimation(std::vector<byte> &block)
     {
         const int duration = takeInt(block, 8);
+        std::cout << "----- CIFF:Header -----" << std::endl;
+        // check CAFF magic
+        const std::vector<byte> *ciffMagic = take(block, 4);
+        if (ciffMagic->at(0) != 0x43 ||
+            ciffMagic->at(1) != 0x49 ||
+            ciffMagic->at(2) != 0x46 ||
+            ciffMagic->at(3) != 0x46)
+        {
+            delete ciffMagic;
+            return new CaffAnimationResult(duration, 0, 0, "", nullptr, nullptr, "Wrong CIFF magic");
+        }
 
-        // TODO implement CIFF parsing
+        std::cout << ciffMagic << std::endl;
+        const int header_size = takeInt(block, 8);
+        std::cout << header_size << std::endl;
+        const int content_size = takeInt(block, 8);
+        std::cout << content_size << std::endl;
+        const int width = takeInt(block, 8);
+        std::cout << width << std::endl;
+        const int height = takeInt(block, 8);
+        std::cout << height << std::endl;
 
-        return new CaffAnimationResult (duration, OK_RESULT);
+        const std::vector<byte> *captionByte = takeUntil(block, 0x0A);
+        const int captionSize = captionByte->size();
+        char captionArr[captionSize];
+        for (size_t i = 0; i < captionSize; i++)
+        {
+            captionArr[i] = captionByte->at(i);
+        }
+        captionArr[captionSize - 1] = '\0';
+        std::string caption(reinterpret_cast<char *>(captionArr));
+        delete captionByte;
+
+        std::vector<byte> *tagsContent = take(block, header_size - (4 + 8 + 8 + 8 + 8 + captionSize));
+        std::vector<std::string> *tags = new std::vector<std::string>();
+
+        while (tagsContent->size() != 0)
+        {
+            const std::vector<byte> *tagByte = takeUntil(*tagsContent, 0x00);
+            const int tagSize = tagByte->size();
+            char tagArr[tagSize];
+            for (size_t i = 0; i < tagSize; i++)
+            {
+                tagArr[i] = tagByte->at(i);
+            }
+            tagArr[tagSize - 1] = '\0';
+            std::string tag(reinterpret_cast<char *>(tagArr));
+            tags->push_back(tag);
+            delete tagByte;
+        }
+        std::vector<Pixel> *pixels = new std::vector<Pixel>();
+        while (block.size() != 0)
+        {
+            int red = takeInt(block, 1);
+            int green = takeInt(block, 1);
+            int blue = takeInt(block, 1);
+            pixels->push_back(Pixel(red, green, blue));
+        }
+
+        return new CaffAnimationResult(duration, width, height, caption, tags, pixels, OK_RESULT);
     }
 
     CaffHeaderResult parseCaffHeader(std::vector<byte> &file)
