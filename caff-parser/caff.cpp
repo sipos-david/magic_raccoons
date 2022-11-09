@@ -76,13 +76,13 @@ namespace CAFF {
         int blue = 0;
         for (int i = 0; i < width * height * 3; i++) {
             if (count == 0) {
-                red = block.at(i) * std::pow(16, 2);
+                red = block.at(i);
             }
             if (count == 1) {
-                green = block.at(i) * std::pow(16, 2);
+                green = block.at(i);
             }
             if (count == 2) {
-                blue = block.at(i) * std::pow(16, 2);
+                blue = block.at(i);
             }
             count++;
             if (count == 3) {
@@ -93,7 +93,7 @@ namespace CAFF {
                 blue = 0;
             }
         }
-/*
+        /*
         while (block.size() != 0)
         {
 
