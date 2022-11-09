@@ -34,7 +34,8 @@ namespace CAFF {
         delete ciffMagic;
 
         const int header_size = takeInt(block, 8);
-        const int content_size = takeInt(block, 8);
+        // content_size, not used but bytes have to be removed
+        takeInt(block, 8);
         const int width = takeInt(block, 8);
         const int height = takeInt(block, 8);
 
