@@ -1,17 +1,27 @@
 #include "caff.hpp"
 #include <regex>
 
-std::vector<byte> loadFile(std::string const &filepath)
-{
-    std::ifstream input(filepath, std::ios::binary);
+std::vector<byte> loadFile(std::string const &filepath) {
+    try {
+        std::ifstream input(filepath, std::ios::binary);
 
-    // copies all data into buffer
-    std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(input), {});
-    return buffer;
+        // copies all data into buffer
+        std::vector<unsigned char> buffer(std::istreambuf_iterator<char>(input), {});
+        return buffer;
+    } catch (...) {
+        return std::vector<unsigned char>();
+    }
 }
 
-void writeJsonCredits(std::ofstream &outFile, CAFF::CaffCreditsResult *cResult)
-{
+void writeJsonError(std::ofstream &outFile, const std::string &error) {
+    std::cout << error << std::endl;
+    outFile << "{" << std::endl;
+    outFile << "\t\"error\": \"" << error << "\"" << std::endl;
+    outFile << "}" << std::endl;
+    outFile.close();
+}
+
+void writeJsonCredits(std::ofstream &outFile, CAFF::CaffCreditsResult *cResult) {
     outFile << "{" << std::endl;
     outFile << "\t\"credits\":" << std::endl;
     outFile << "\t{" << std::endl;
@@ -28,12 +38,10 @@ void writeJsonCredits(std::ofstream &outFile, CAFF::CaffCreditsResult *cResult)
     outFile << "\t}," << std::endl;
 }
 
-void writeJsonAnimation(std::ofstream &outFile, std::vector<CAFF::CaffAnimationResult *> aResult)
-{
+void writeJsonAnimation(std::ofstream &outFile, std::vector<CAFF::CaffAnimationResult *> aResult) {
     outFile << "\t\"animation\":" << std::endl;
     outFile << "\t[" << std::endl;
-    for (int i = 0; i < aResult.size(); i++)
-    {
+    for (int i = 0; i < aResult.size(); i++) {
         outFile << "\t\t{" << std::endl;
         outFile << "\t\t\"duration\":";
         outFile << " " << aResult[i]->getDuration() << "," << std::endl;
@@ -44,34 +52,16 @@ void writeJsonAnimation(std::ofstream &outFile, std::vector<CAFF::CaffAnimationR
         outFile << "\t\t\"caption\":\"" << aResult[i]->getCaption();
         outFile << "\"," << std::endl;
         outFile << "\t\t\"tags\":[";
-        for (size_t j = 0; j < aResult[i]->getTags()->size(); j++)
-        {
-            outFile << "\t\t\t\"" << aResult[i]->getTags()->at(j) << "\"";
-            if (j != aResult[i]->getTags()->size() - 1)
-            {
-                outFile << "," << std::endl;
-            }
-        }
-        outFile << "\t\t]," << std::endl;
-        outFile << "\t\t\"pixels\":[";
-        for (size_t j = 0; j < aResult[i]->getPixels()->size(); j++)
-        {
-            outFile << "\t\t\t{";
-            outFile << "\"red:\":" << aResult[i]->getPixels()->at(j).getRed();
-            outFile << ",\"green:\":" << aResult[i]->getPixels()->at(j).getGreen();
-            outFile << ",\"blue:\":" << aResult[i]->getPixels()->at(j).getBlue() << "}";
-            if (j != aResult[i]->getPixels()->size() - 1)
-            {
+        for (size_t j = 0; j < aResult[i]->getTags()->size(); j++) {
+            outFile << "\"" << aResult[i]->getTags()->at(j) << "\"";
+            if (j != aResult[i]->getTags()->size() - 1) {
                 outFile << "," << std::endl;
             }
         }
         outFile << "\t\t]" << std::endl;
-        if (i == aResult.size() - 1)
-        {
+        if (i == aResult.size() - 1) {
             outFile << "\t\t}" << std::endl;
-        }
-        else
-        {
+        } else {
             outFile << "\t\t}," << std::endl;
         }
     }
@@ -80,125 +70,98 @@ void writeJsonAnimation(std::ofstream &outFile, std::vector<CAFF::CaffAnimationR
     outFile.close();
 }
 
-int main(int argc, char const *argv[])
-{
-    // argv[1] => input file
-    // argv[2] => output folder (preview.tga, metadata.json)
+void clean(CAFF::CaffCreditsResult *cResult, std::vector<CAFF::CaffAnimationResult *> animations) {
+    delete cResult;
 
-    if (argc != 3)
-    {
+    for (int i = 0; i < animations.size(); i++) {
+        delete animations[i]->getTags();
+        delete animations[i]->getPixels();
+        delete animations[i];
+    }
+}
+
+int main(int argc, char const *argv[]) {
+    // argv[1] => input file
+    // argv[2] => output folder without / at the end (preview.tga, metadata.json)
+
+    if (argc != 3) {
         // args not provided
         return 1;
     }
 
-    std::string filename = argv[2];
-    std::regex file_regex("^(?!.*_).*\.json$");
+    std::string outputFolder = argv[2];
 
-    if (!regex_match(filename, file_regex))
-    {
-        std::cout << "You must provide a txt file!" << std::endl;
+    const std::string tgaBasePath = outputFolder + "/preview";
+    const std::string tgaExtension = ".tga";
+    const std::string jsonPath = outputFolder + "/metadata.json";
+
+    std::ofstream metadata(jsonPath);
+    if (!metadata) {
+        std::cout << jsonPath << std::endl;
         return 1;
     }
 
-    std::ofstream outFile(filename);
-    if (!outFile)
-        throw CantOpenFileException();
-
     std::vector<byte> file = loadFile(argv[1]);
+    if (file.empty()) {
+        writeJsonError(metadata, "Input file error!");
+        return 1;
+    }
 
     CAFF::CaffHeaderResult hResult = CAFF::parseCaffHeader(file);
     CAFF::CaffCreditsResult *cResult = nullptr;
     std::vector<CAFF::CaffAnimationResult *> animations;
 
-    if (hResult.getResult() != OK_RESULT)
-    {
-        std::cout << hResult.getResult();
+    if (hResult.getResult() != OK_RESULT) {
+        writeJsonError(metadata, hResult.getResult());
         return 1;
     }
-    std::cout << "----- CAFF:Header -----" << std::endl;
-    std::cout << hResult.getHeaderSize() << std::endl;
-    std::cout << hResult.getNumAnim() << std::endl;
 
-    try
-    {
-        int nextBlockId = takeInt(file, 1);
-        int blockLength = takeInt(file, 8);
-        while (!file.empty())
-        {
+    try {
+        while (!file.empty()) {
+            int nextBlockId = takeInt(file, 1);
+            int blockLength = takeInt(file, 8);
+
             std::vector<byte> *block = take(file, blockLength);
-            if (nextBlockId == 2)
-            {
-                if (cResult != nullptr)
-                {
+            if (nextBlockId == 2) {
+                if (cResult != nullptr) {
                     throw MultipleCreditsException();
                 }
                 cResult = CAFF::parseCredits(*block);
-                std::cout << "----- CAFF:Credits -----" << std::endl;
-                std::cout << cResult->getYear() << std::endl;
-                std::cout << cResult->getDay() << std::endl;
-                std::cout << cResult->getHour() << std::endl;
-                std::cout << cResult->getMonth() << std::endl;
-                std::cout << cResult->getCreatorLen() << std::endl;
-                std::cout << cResult->getCreator() << std::endl;
-                std::cout << cResult->getResult() << std::endl;
-            }
-            else if (nextBlockId == 3)
-            {
+                if (cResult->getResult() != OK_RESULT) {
+                    writeJsonError(metadata, cResult->getResult());
+                    clean(cResult, animations);
+                    return 1;
+                }
+            } else if (nextBlockId == 3) {
                 CAFF::CaffAnimationResult *aResult = CAFF::parseAnimation(*block);
-                std::cout << "----- CAFF:Animation -----" << std::endl;
-                std::cout << aResult->getDuration() << std::endl;
-                std::cout << aResult->getWidth() << std::endl;
-                std::cout << aResult->getHeight() << std::endl;
-                std::cout << aResult->getCaption() << std::endl;
-                if (aResult->getTags() != nullptr)
-                {
-                    for (int i = 0; i < aResult->getTags()->size(); i++)
-                    {
-                        std::cout << aResult->getTags()->at(i) << std::endl;
-                    }
-                }
-
-                std::cout << aResult->getResult() << std::endl;
-
-                if (aResult->getResult() == OK_RESULT)
-                {
-
-                    printTGA(std::to_string(animations.size()) + "out.tga", aResult->getWidth(), aResult->getHeight(),
+                animations.push_back(aResult);
+                if (aResult->getResult() == OK_RESULT) {
+                    printTGA(tgaBasePath + std::to_string(animations.size()) + tgaExtension,
+                             aResult->getWidth(),
+                             aResult->getHeight(),
                              aResult->getPixels());
-                    animations.push_back(aResult);
+                } else {
+                    writeJsonError(metadata, aResult->getResult());
+                    clean(cResult, animations);
+                    return 1;
                 }
-            }
-            else
-            {
-                std::cout << "Unknown block id!" << std::endl;
+            } else {
+                writeJsonError(metadata, "Unknown block id in file!");
+                clean(cResult, animations);
+                return 1;
             }
             delete block;
-            nextBlockId = takeInt(file, 1);
-            blockLength = takeInt(file, 8);
         }
-    }
-    catch (EmptyByteVectorException &e)
-    {
-        // TODO write error in json
-    }
-    catch (MultipleCreditsException &e)
-    {
-        // TODO write error in json
+    } catch (std::exception &e) {
+        writeJsonError(metadata, e.what());
+        clean(cResult, animations);
+        return 1;
     }
 
-    // TODO write preview.tga, metadata.json
+    writeJsonCredits(metadata, cResult);
+    writeJsonAnimation(metadata, animations);
 
-    writeJsonCredits(outFile, cResult);
-    writeJsonAnimation(outFile, animations);
-
-    delete cResult;
-
-    for (int i = 0; i < animations.size(); i++)
-    {
-        delete animations[i]->getTags();
-        delete animations[i]->getPixels();
-        delete animations[i];
-    }
+    clean(cResult, animations);
 
     return 0;
 }
