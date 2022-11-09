@@ -2,33 +2,35 @@
 
 namespace CAFF
 {
-    CaffCreditsResult parseCredits(std::vector<byte> &file)
+    CaffCreditsResult* parseCredits(std::vector<byte> &block)
     {
-        const int year = takeInt(file, 2);
-        const int month = takeInt(file, 1);
-        const int day = takeInt(file, 1);
-        const int hour = takeInt(file, 1);
-        const int minute = takeInt(file, 1);
-        const int creator_len = takeInt(file);
+        // TODO check block size is exactly 6 + 8 + creator_len
 
-        std::vector<byte> *rawCreator = take(file, creator_len);
+        const int year = takeInt(block, 2);
+        const int month = takeInt(block, 1);
+        const int day = takeInt(block, 1);
+        const int hour = takeInt(block, 1);
+        const int minute = takeInt(block, 1);
+        const int creator_len = takeInt(block);
+
         char creatorArr[creator_len + 1];
         for (size_t i = 0; i < creator_len; i++)
         {
-            creatorArr[i] = rawCreator->at(i);
+            creatorArr[i] = block.at(i);
         }
-        delete rawCreator;
         creatorArr[creator_len] = '\0';
 
         std::string creator(reinterpret_cast<char *>(creatorArr));
-        return {year, month, day, hour, minute, creator_len, creator, OK_RESULT};
+        return new CaffCreditsResult(year, month, day, hour, minute, creator_len, creator, OK_RESULT);
     }
 
-    CaffAnimationResult parseAnimation(std::vector<byte> &file)
+    CaffAnimationResult* parseAnimation(std::vector<byte> &block)
     {
-        const int duration = takeInt(file, 8);
+        const int duration = takeInt(block, 8);
 
-        return {duration, OK_RESULT};
+        // TODO implement CIFF parsing
+
+        return new CaffAnimationResult (duration, OK_RESULT);
     }
 
     CaffHeaderResult parseCaffHeader(std::vector<byte> &file)
@@ -38,7 +40,7 @@ namespace CAFF
         if (id != 1)
         {
             std::cout << id;
-            return CaffHeaderResult(0, 0, "Wrong CAFF:Header block id!");
+            return {0, 0, "Wrong CAFF:Header block id!"};
         }
 
         // load CAFF header

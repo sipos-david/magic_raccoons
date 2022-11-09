@@ -14,10 +14,15 @@ int bytesToInt(const std::vector<byte> &bytes)
 
 std::vector<byte> *take(std::vector<byte> &from, const int elements)
 {
-    std::vector<byte> *arr = new std::vector<byte>();
-    for (size_t i = 0; i < elements; i++)
-    {
-        arr->push_back(from[i]);
+    auto *arr = new std::vector<byte>();
+    int i = 0;
+    for (auto it = from.begin(); it < from.end() && i < elements; it++) {
+        ++i;
+        arr->push_back(*it);
+    }
+    if (i  != elements) {
+        delete arr;
+        return nullptr;
     }
     from.erase(from.begin(), from.begin() + elements);
     return arr;
@@ -26,6 +31,10 @@ std::vector<byte> *take(std::vector<byte> &from, const int elements)
 int takeInt(std::vector<byte> &from, const int bytes)
 {
     const std::vector<byte> *rawData = take(from, bytes);
+    if (rawData == nullptr)
+    {
+        throw EmptyByteVectorException();
+    }
     const int data = bytesToInt(*rawData);
     delete rawData;
     return data;
