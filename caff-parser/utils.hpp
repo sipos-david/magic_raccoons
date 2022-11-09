@@ -16,6 +16,12 @@ struct EmptyByteVectorException : std::exception {
     }
 };
 
+struct MultipleCreditsException : std::exception {
+    [[nodiscard]] const char *what() const noexcept override {
+        return "CAFF::MultipleCreditsException";
+    }
+};
+
 const std::string OK_RESULT = "ok";
 
 int bytesToInt(const std::vector<byte> &bytes);

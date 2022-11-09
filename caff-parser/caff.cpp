@@ -2,7 +2,7 @@
 
 namespace CAFF
 {
-    CaffCreditsResult parseCredits(std::vector<byte> &block)
+    CaffCreditsResult* parseCredits(std::vector<byte> &block)
     {
         // TODO check block size is exactly 6 + 8 + creator_len
 
@@ -21,16 +21,16 @@ namespace CAFF
         creatorArr[creator_len] = '\0';
 
         std::string creator(reinterpret_cast<char *>(creatorArr));
-        return {year, month, day, hour, minute, creator_len, creator, OK_RESULT};
+        return new CaffCreditsResult(year, month, day, hour, minute, creator_len, creator, OK_RESULT);
     }
 
-    CaffAnimationResult parseAnimation(std::vector<byte> &file)
+    CaffAnimationResult* parseAnimation(std::vector<byte> &block)
     {
-        const int duration = takeInt(file, 8);
+        const int duration = takeInt(block, 8);
 
         // TODO implement CIFF parsing
 
-        return {duration, OK_RESULT};
+        return new CaffAnimationResult (duration, OK_RESULT);
     }
 
     CaffHeaderResult parseCaffHeader(std::vector<byte> &file)

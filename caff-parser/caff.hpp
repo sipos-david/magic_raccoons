@@ -80,9 +80,9 @@ namespace CAFF
         int duration;
     };
 
-    CaffCreditsResult parseCredits(std::vector<byte> &block);
+    CaffCreditsResult* parseCredits(std::vector<byte> &block);
 
-    CaffAnimationResult parseAnimation(std::vector<byte> &block);
+    CaffAnimationResult* parseAnimation(std::vector<byte> &block);
 
     CaffHeaderResult parseCaffHeader(std::vector<byte> &block);
 }
