@@ -162,9 +162,9 @@ int main(int argc, char const *argv[])
 
                 if (aResult->getResult() == OK_RESULT)
                 {
-                    /*
+
                     printTGA(std::to_string(animations.size()) + "out.tga", aResult->getWidth(), aResult->getHeight(),
-                             aResult->getPixels());*/
+                             aResult->getPixels());
                     animations.push_back(aResult);
                 }
             }

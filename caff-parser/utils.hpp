@@ -60,6 +60,6 @@ int takeInt(std::vector<byte> &from, int bytes = 8);
 
 std::vector<byte> *takeUntil(std::vector<byte> &from, byte until);
 
-void printTGA(std::string path, int width, int height, const std::vector<Pixel> *pixels);
+void printTGA(const std::string& path, int width, int height, const std::vector<Pixel> *pixels);
 
 #endif // CAFF_PARSER_UTILS_H

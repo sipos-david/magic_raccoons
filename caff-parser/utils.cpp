@@ -65,16 +65,16 @@ std::vector<byte> *takeUntil(std::vector<byte> &from, byte until)
     return arr;
 }
 
-void printTGA(std::string path, int width, int height, const std::vector<Pixel> *pixels)
+void printTGA(const std::string& path, int width, int height, const std::vector<Pixel> *pixels)
 {
-    std::ofstream tga(path, std::ios::binary);
+    std::ofstream tga(path, std::ios::out | std::ios::binary);
     if (!tga)
         throw CantOpenFileException();
 
     char header[18] = {0};
     header[0] = 0;
     header[1] = 0;
-    header[2] = 0;
+    header[2] = 2;
     header[12] = width & 0xFF;
     header[13] = (width >> 8) & 0xFF;
     header[14] = height & 0xFF;
@@ -85,20 +85,12 @@ void printTGA(std::string path, int width, int height, const std::vector<Pixel> 
 
     for (auto &pixel : *pixels)
     {
-        std::string red = std::to_string(pixel.getRed());
-        std::string green = std::to_string(pixel.getGreen());
-        std::string blue = std::to_string(pixel.getBlue());
-        tga.write(red.c_str(), sizeof(char));
-        tga.write(green.c_str(), sizeof(char));
-        tga.write(blue.c_str(), sizeof(char));
+        char red = static_cast<char>(pixel.getRed());
+        char green = static_cast<char>(pixel.getGreen());
+        char blue = static_cast<char>(pixel.getBlue());
+        tga.write( &red, sizeof(char));
+        tga.write(&green, sizeof(char));
+        tga.write(&blue, sizeof(char));
     }
-
-    static const char footer[26] =
-        "\0\0\0\0"         // no extension area
-        "\0\0\0\0"         // no developer directory
-        "TRUEVISION-XFILE" // yep, this is a TGA file
-        ".";
-    tga.write(footer, 26);
-
     tga.close();
 }
