@@ -63,6 +63,7 @@ namespace CAFF {
             tags->push_back(tag);
             delete tagByte;
         }
+        delete tagsContent;
         std::vector<Pixel> *pixels = new std::vector<Pixel>();
         int count = 0;
         int red = 0;
