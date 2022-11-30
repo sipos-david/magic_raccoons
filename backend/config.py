@@ -6,4 +6,8 @@ class Settings(BaseSettings):
     ui_url: str
 
     class Config:
+        case_sensitive = True
+ 
+
+    class Config:
         env_file = ".env"

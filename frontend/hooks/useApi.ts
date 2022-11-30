@@ -19,7 +19,7 @@ export default function useApi<T>(path: string) {
   const accessToken = useAccessToken();
   const { data, error } = useSWR<T | undefined>(
     [process.env.NEXT_PUBLIC_API_URL + path, accessToken]
-    , fetcher
+    ,fetcher
   );
 
   return {

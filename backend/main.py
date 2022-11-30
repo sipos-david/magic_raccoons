@@ -13,6 +13,19 @@ from pydantic import BaseModel
 
 from config import Settings
 
+from sqlalchemy.orm import Session
+import crud, models, schemas
+from database import SessionLocal, engine
+
+models.Base.metadata.create_all(bind=engine)
+
+# Dependency
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @lru_cache()
 def get_settings():
@@ -87,12 +100,101 @@ async def get_current_user(token: str = Depends(oauth2_scheme)):
 async def get_current_active_user(current_user: User = Depends(get_current_user)):
     return current_user
 
+@app.get("/api/logs")
+async def get_logs(db:Session=Depends(get_db)):
+    return crud.get_logs(db)
 
-@app.get("/users/me/", response_model=User)
-async def read_users_me(current_user: User = Depends(get_current_active_user)):
-    return current_user
+@app.post("/api/logs")
+async def create_log(log:schemas.Log,db:Session=Depends(get_db)):
+    return crud.create_log(log,db)
+
+@app.get("/api/users")
+async def get_users(db:Session=Depends(get_db)):
+    return crud.get_logs(db)
+
+@app.post("/api/users")
+async def create_user(user:schemas.User,db:Session=Depends(get_db)):
+    return crud.create_user(user,db=db)
+
+'''
+@app.get("/api/users/me")
+async def get_users_by_username(db:Session=Depends(get_db)):
+    return crud.get_logs(db)
+'''
 
 
-@app.get("/users/me/items/")
-async def read_own_items(current_user: User = Depends(get_current_active_user)):
-    return [{"item_id": "Foo", "owner": current_user.username}]
+
+@app.get("/api")
+async def read_caffs(db:Session=Depends(get_db)):
+    caffs = crud.get_caffs(db)
+    return caffs
+
+
+@app.post("/api")
+async def create_caff(caff:schemas.CaffBase,db:Session=Depends(get_db)):
+    return crud.create_caff(db=db,caff=caff)
+
+@app.get("/api/")
+async def read_caffs_with_comments(db:Session=Depends(get_db)):
+    caffs = crud.get_caffs(db)
+    ret:list=[]
+    for x in caffs:
+        comments:list=crud.get_comments_by_collection_id(x.id,db=db)
+        element=vars(x)
+        element["comments"]=[]
+        element["comments"]+=comments
+        ret.append(element)
+    return ret
+
+@app.post("/api/{caff_id}/comments")
+async def create_comment_to_caff(caff_id:int,comment:schemas.CommentBase,db:Session=Depends(get_db)):
+    caff = crud.get_caff_by_id(caff_id,db=db,skip=0)
+    if (caff==None):
+        raise HTTPException(status_code=400, detail="There is not a Caff with id: "+str(caff_id))
+    return crud.create_comment(db=db,comment=comment,collection_id=caff_id)
+
+@app.get("/api/{caff_id}")
+async def read_caff_by_id_with_comments(caff_id:int,db:Session=Depends(get_db)):
+    caff = crud.get_caff_by_id(caff_id,db=db,skip=0)
+    if (caff==None):
+        raise HTTPException(status_code=400, detail="There is not a Caff with id: "+str(caff_id))
+    comments = crud.get_comments_by_collection_id(collection_id=caff_id,db=db)
+    caff_dict=vars(caff)
+    print(type(comments))
+    print(comments)
+    caff_dict['comments']=[]
+    caff_dict["comments"]+=comments
+    return caff_dict
+
+
+@app.get("/api/{caff_id}/comments/{comment_id}")
+async def get_comment_by_id(caff_id:int,comment_id:int,db:Session=Depends(get_db)):
+    caff = crud.get_caff_by_id(caff_id,db=db,skip=0)
+    if (caff==None):
+        raise HTTPException(status_code=400, detail="There is not a Caff with id: "+str(caff_id))
+    comment = crud.get_comment_by_id(comment_id,db)
+    if (comment==None):
+        raise HTTPException(status_code=400, detail="There is not a comment with id: "+str(comment_id))
+    return comment
+
+@app.put("/api/{caff_id}/comments/{comment_id}")
+async def update_comment_by_id(caff_id:int,comment_id:int,comment:schemas.CommentBase,db:Session=Depends(get_db)):
+    caff = crud.get_caff_by_id(caff_id,db=db,skip=0)
+    if (caff==None):
+        raise HTTPException(status_code=400, detail="There is not a Caff with id: "+str(caff_id))
+    comment_ret = crud.get_comment_by_id(comment_id,db)
+    if (comment_ret==None):
+        raise HTTPException(status_code=400, detail="There is not a comment with id: "+str(comment_id))
+    comment_updated= crud.update_comment_by_id(comment_id=comment_id,comment=comment,db=db)
+    return comment_updated
+
+@app.delete("/api/{caff_id}/comments/{comment_id}")
+async def delete_comment_by_id(caff_id:int,comment_id:int,db:Session=Depends(get_db)):
+    caff = crud.get_caff_by_id(caff_id,db=db,skip=0)
+    if (caff==None):
+        raise HTTPException(status_code=400, detail="There is not a Caff with id: "+str(caff_id))
+    comment = crud.get_comment_by_id(comment_id,db)
+    if (comment==None):
+        raise HTTPException(status_code=400, detail="There is not a comment with id: "+str(comment_id))
+    return crud.delete_comment_by_id(comment_id,db)
+
