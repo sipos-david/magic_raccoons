@@ -1,10 +1,11 @@
 from functools import lru_cache
 import json
+import subprocess
 import sys
 from typing import Optional
 
 import requests
-from fastapi import Depends, FastAPI, HTTPException, status
+from fastapi import Depends, FastAPI, HTTPException, status, File, UploadFile
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
@@ -17,6 +18,7 @@ from sqlalchemy.orm import Session
 import crud, models, schemas
 from database import SessionLocal, engine
 
+import shutil
 models.Base.metadata.create_all(bind=engine)
 
 # Dependency
@@ -77,6 +79,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+ALLOWED_EXTENSIONS = set(['caff'])
 
 async def get_current_user(token: str = Depends(oauth2_scheme)):
     credentials_exception = HTTPException(
@@ -116,12 +119,10 @@ async def get_users(db:Session=Depends(get_db)):
 async def create_user(user:schemas.User,db:Session=Depends(get_db)):
     return crud.create_user(user,db=db)
 
-'''
-@app.get("/api/users/me")
-async def get_users_by_username(db:Session=Depends(get_db)):
-    return crud.get_logs(db)
-'''
 
+@app.get("/users/me")
+async def get_user_id_by_username(username:str,db:Session=Depends(get_db)):
+    return crud.get_user_id_by_username(username,db)
 
 
 @app.get("/api")
@@ -198,3 +199,28 @@ async def delete_comment_by_id(caff_id:int,comment_id:int,db:Session=Depends(get
         raise HTTPException(status_code=400, detail="There is not a comment with id: "+str(comment_id))
     return crud.delete_comment_by_id(comment_id,db)
 
+@app.post("/upload_file")
+async def create_upload_file(file: UploadFile = File(...)):
+    if not file:
+        return {"message": "No upload file sent"}
+    else:
+        if allowed_file(file.filename)==True:
+            with open(f'./data/{file.filename}','wb')as buffer:
+                shutil.copyfileobj(file.file,buffer)
+            #TODO, filename
+            parse_caff("1.caff")
+            return {"message":"Uploaded successfully"}
+        else:
+            return{"message":"Illegal file extension"}
+
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
+
+@app.get("/process")
+def parse_caff_file():
+    return subprocess.run(args=['ls', '-l'])
+
+#TODO: filename-et megcsinálni, és csak akkor működik, ha linux alatt fut a backend és linux alatt lett fordítva make all-al a caff parser
+def parse_caff(filename:str):
+    subprocess.run("../caff-parser/caff_parser ./data/1.caff ./result",shell=True)

@@ -79,6 +79,9 @@ def get_users(db:Session):
     db_caff= db.query(models.User).all()
     return db_caff
 
+def get_user_id_by_username(username:str, db:Session):
+    return db.query(models.User).filter(models.User.username == username).first()
+
 def create_user(user:schemas.User,db:Session):
     model_user=models.User(user_id=user.user_id,username=user.username)
     db.add(model_user)
