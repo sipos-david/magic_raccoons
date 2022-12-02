@@ -1,6 +1,9 @@
 {
 	"folders": [
 		{
+			"path": ".",
+		},
+		{
 			"path": "backend",
 		},
 		{
@@ -10,5 +13,12 @@
 			"path": "frontend",
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.exclude": {
+			".vscode": true,
+			"backend": true,
+			"caff-parser": true,
+			"frontend": true,
+		},
+	}
 }
