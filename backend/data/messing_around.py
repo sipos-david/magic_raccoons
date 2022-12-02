@@ -1,24 +1,19 @@
 from subprocess import check_output as qx
 import subprocess
 
-cmd = ["./windows.exe", "./data/1.caff", "./result"]
+# TODO Mappát készíteni a kimenetnek /caff/data/out/{mappaId} és ezt átadni majd az args-nak a data/out/helyett
+args = ["/caff/parser/caff_parser", "/caff/parser/res/1.caff",
+        "/caff/data/out/"]
 
-output = subprocess.run(cmd,shell=True)
-print (output)
+cmd = " ".join(args)
 
-'''
-----------------------Windowson fordított instance---------------
----------------parancs: g++ *.cpp -o windows.exe-----------------
+output = subprocess.run(cmd, shell=True)
+# TODO parser visszatérési értékének ellenőrzése, ha nem 0 akkor nem folyatatni tovább
 
-cmd =str("./windows.exe")
-args=["./1.caff", "./"]
-subprocess.run(executable=cmd,args=args)
-'''
+f = open("/caff/data/out/metadata.json", "r")
+print(f.read())
+f.close()
+# TODO json beolvasasása fájlból és ebből lehet a többi lépés
 
-
-'''
-----------------------WSL-en fordított instance---------------
-----------------parancs: make all-----------------------------
-
-subprocess.run("../caff-parser/caff_parser ./data/1.caff ./result",shell=True)
-'''
+# TODO tga-ból .gif vagy valami böngésző álltal elfogadott képformátum (webp, jpeg, bmp) => bármilyen könyvtár jó, de a nevet és verzió számod írd fel
+# TODO a készített képet lementeni a /caff/data/preview mappába {id}.gif névvel
