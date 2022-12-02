@@ -1,0 +1,12 @@
+# parser exlcudes
+caff-parser/cmake-build-debug
+caff-parser/CMakeLists.txt
+caff-parser/windows.exe
+caff-parser/.gitignore
+caff-parser/res/preview1.tga
+caff-parser/res/preview2.tga
+# backend excludes
+backend/__pycache__
+backend/conf
+backend/.gitignore
+backend/.env
