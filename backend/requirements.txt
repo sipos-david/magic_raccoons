@@ -1,0 +1,9 @@
+fastapi>=0.68.0,<0.69.0
+pydantic>=1.8.0,<2.0.0
+uvicorn>=0.15.0,<0.16.0
+SQLAlchemy==1.4.44
+requests==2.28.1
+mysqlclient==2.1.1
+python-jose==3.3.0
+python-multipart==0.0.5
+mysql-connector-python==8.0.31
