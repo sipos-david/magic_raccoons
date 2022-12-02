@@ -2,11 +2,12 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 
-SQLALCHEMY_DATABASE_URL = "mysql+mysqlconnector://caffshop:d]ByZ5%,/Z489gxZ@localhost:3306/caffshop"
-#TODO Enviroment változókból kell jönnie
+from config import Settings
+
+settings = Settings()
 
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL
+    settings.database_url
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

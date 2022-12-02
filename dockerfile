@@ -16,11 +16,11 @@ RUN apt-get install -y python3 python3-pip default-libmysqlclient-dev
 
 COPY ./backend ./backend
 
-CMD ["/bin/bash"]
+RUN cd backend && pip install -r requirements.txt
 
 # TODO root helyett nem root felhasználó létrehozása a konténerben
 
-# TODO pip install -r /caff/backend/requirements.txt
+WORKDIR /caff/backend
 
-# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "80"]
-# EXPOSE 80
+EXPOSE 80
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]

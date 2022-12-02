@@ -1,5 +1,17 @@
 version: "3.9"
 services:
+  caff:
+    build: .
+    ports:
+      - "8000:80"
+    depends_on:
+      - mysql
+      - keycloak
+    environment:
+      KEYCLOAK_REALM_URL: ${KEYCLOAK_REALM_URL}
+      UI_URL: ${UI_URL}
+      DATABASE_URL: ${DATABASE_URL}
+
   mysql:
     image: "mysql/mysql-server:latest"
     command:
