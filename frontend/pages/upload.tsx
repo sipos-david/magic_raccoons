@@ -1,9 +1,11 @@
 import { NextPage } from "next";
 import { ChangeEvent, MouseEvent, useState } from "react";
 import Header from "../components/Header";
+import { useSnackbar } from "../context/snackbarContext";
 
 const Upload: NextPage = () => {
   const [fileSelected, setFileSelected] = useState<File | undefined>();
+  const { showSnackbar } = useSnackbar();
 
   const onClickHandler = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
@@ -16,9 +18,14 @@ const Upload: NextPage = () => {
         mode: "cors",
         body: form
       }).then((response) => {
-        return response.json();
-      }).then((data) => {
-        alert(JSON.stringify(data));
+        if (response.ok) {
+          showSnackbar({ text: "Sikeres fájl feltöltés", severity: "success" });
+        } else {
+          showSnackbar({ text: "Sikertelen fájl feltöltés", severity: "error" });
+          response.json().then((data) => {
+            console.error(data);
+          });
+        }
       });
     }
   };
