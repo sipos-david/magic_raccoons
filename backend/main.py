@@ -19,7 +19,7 @@ import crud, models, schemas
 from database import SessionLocal, engine
 
 from os.path import exists as path_exists
-from os import makedirs, listdir
+from os import makedirs, listdir, remove
 from uuid import uuid4
 from json import load
 from re import match
@@ -261,7 +261,8 @@ def parse_caff(filename:str,db:Session):
     output = subprocess.run(cmd, shell=True)
 
     if output.returncode != 0:
-        exit
+        remove ( "/caff/backend/data/"+filename)
+        raise HTTPException(status_code=422, detail="The content of the uploaded file did not fit the CAFF file format. Upload did not complete.") 
 
     f = open(gen_path+"metadata.json", "r")
     metadata = load(f)
