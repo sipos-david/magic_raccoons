@@ -12,7 +12,7 @@ export default function App({ Component, pageProps: { session, ...pageProps }, }
         <meta name="description" content="CaffShop" />
         <link rel="icon" href="/favicon.ico" />
       </Head>
-      <SessionProvider session={session}>
+      <SessionProvider session={session} refetchInterval={4 * 60}>
         <Component {...pageProps} />
       </SessionProvider>
     </>
