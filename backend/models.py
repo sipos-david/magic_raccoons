@@ -28,7 +28,8 @@ class Ciff(Base):
     height=Column(Integer,nullable=False)
     caption=Column(Text)
     collection_id=Column(Integer,ForeignKey("caffs.id"),nullable=False)
-    previewfile=Column(Text,nullable=False) 
+    previewfile=Column(Text,nullable=False) #TODO kitörölni, ha nem kell
+    tags=Column(String(256))
 
     collection=relationship("Caff",back_populates="animations")
 

@@ -31,7 +31,18 @@ def get_caff_by_id(id:int,db:Session,skip:int=0):
 def get_caff_by_id_with_comments(id:int,db:Session,skip:int=0):
     return db.query(models.Caff).filter(models.Caff.id==id).offset(skip).all()
 
-
+def create_ciff(db:Session,ciff=schemas.CiffCreate):
+    db_ciff=models.Ciff(      width=ciff.width
+                              ,height=ciff.height
+                              ,collection_id=ciff.collection_id
+                              ,tags=ciff.tags
+                              ,duration=ciff.duration
+                              ,caption=ciff.caption
+                              ,previewfile=ciff.previewfile)
+    db.add(db_ciff)
+    db.commit()
+    db.refresh(db_ciff)
+    return db_ciff
 
 def create_comment(db:Session,comment:schemas.CommentBase,collection_id:int):
     db_comment=models.Comment(text=comment.text
