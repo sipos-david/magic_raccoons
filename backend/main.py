@@ -25,7 +25,7 @@ from uuid import uuid4
 from json import load
 from re import match
 from PIL import Image
-
+from starlette.responses import FileResponse
 import shutil
 models.Base.metadata.create_all(bind=engine)
 
@@ -200,6 +200,14 @@ async def get_comment_by_id(caff_id:int,comment_id:int,db:Session=Depends(get_db
         raise HTTPException(status_code=400, detail="There is not a comment with id: "+str(comment_id))
     return comment
 
+@app.get("/download_caff/{caff_id}",response_class=FileResponse)
+async def download_caff(caff_id:int,db:Session=Depends(get_db)):
+    caff = crud.get_caff_by_id(caff_id,db=db,skip=0)
+    if (caff==None):
+        raise HTTPException(status_code=400, detail="There is not a Caff with id: "+str(caff_id))
+    filename=caff.rawfile.split('/')[-1]   
+    return FileResponse(caff.rawfile,filename=filename)
+
 @app.put("/api/{caff_id}/comments/{comment_id}")
 async def update_comment_by_id(caff_id:int,comment_id:int,comment:schemas.CommentBase,db:Session=Depends(get_db)):
     caff = crud.get_caff_by_id(caff_id,db=db,skip=0)
@@ -227,9 +235,13 @@ async def create_upload_file(file: UploadFile = File(...),db:Session=Depends(get
         return {"message": "No upload file sent"}
     else:
         if allowed_file(file.filename)==True:
-            with open(f'./data/{file.filename}','wb')as buffer:
+            id = str(uuid4())
+            dir="/caff/data/out/"+id
+            filename_with_extension = "source.caff"
+            makedirs(dir)
+            with open(f'{dir}/{filename_with_extension}','wb')as buffer:
                 shutil.copyfileobj(file.file,buffer)
-            parse_caff(db=db,filename=file.filename,)
+            parse_caff(db=db,filename=filename_with_extension,dir=dir)
             return {"message":"Uploaded successfully"}
         else:
             return{"message":"Illegal file extension"}
@@ -237,30 +249,21 @@ async def create_upload_file(file: UploadFile = File(...),db:Session=Depends(get
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
 
-def parse_caff(filename:str,db:Session):
-    path = '/caff/data/out/'
+def parse_caff(db:Session,filename:str,dir:str):
     preview_path = '/caff/data/preview/'
-    id = str(uuid4())
-    gen_path = path + str(uuid4())
-
-    while path_exists(gen_path):
-        id = str(uuid4())
-        gen_path = path + str(uuid4())
         
-    makedirs(gen_path)
-    gen_path = gen_path + '/'           #caff/data/out/${UID}/
-
-    args = ["/caff/parser/caff_parser", "/caff/parser/res/"+filename,
-            gen_path]
+    args = ["/caff/parser/caff_parser", dir+'/'+filename,
+            dir]
 
     cmd = " ".join(args)
 
+    
     output = subprocess.run(cmd, shell=True)
 
     if output.returncode != 0:
         exit
 
-    f = open(gen_path+"metadata.json", "r")
+    f = open(dir+"/metadata.json", "r")
     metadata = load(f)
     f.close()
 
@@ -280,7 +283,7 @@ def parse_caff(filename:str,db:Session):
                                                    ,minute=-1
                                                    ,creatorlen=creatorLen
                                                    ,creator=creator
-                                                   ,rawfile=gen_path+filename))
+                                                   ,rawfile=dir+'/'+filename))
         
     for i in animations:
         duration=i["duration"]
@@ -296,7 +299,7 @@ def parse_caff(filename:str,db:Session):
                                                         ,tags=tags
                                                         ,previewfile='NA'))
     
-    create_preview_gif(caff.id, preview_path, gen_path)
+    create_preview_gif(caff.id, preview_path, dir+'/')
 
 def create_preview_gif(caff_id, preview_path, gen_path):
     files = listdir(gen_path)
