@@ -112,8 +112,9 @@ async def read_caffs_with_comments(db: Session = Depends(get_db)):
 
 
 @app.post("/api/{caff_id}/comments")
-async def create_comment_to_caff(caff_id: int, comment: schemas.CommentBase, db: Session = Depends(get_db)):
+async def create_comment_to_caff(caff_id: int, comment: schemas.CommentBase, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
+    comment.author_id = user.id
     if (caff == None):
         raise HTTPException(
             status_code=400, detail="There is not a Caff with id: "+str(caff_id))
