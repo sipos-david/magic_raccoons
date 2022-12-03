@@ -31,6 +31,9 @@ def get_caff_by_id(id:int,db:Session,skip:int=0):
 def get_caff_by_id_with_comments(id:int,db:Session,skip:int=0):
     return db.query(models.Caff).filter(models.Caff.id==id).offset(skip).all()
 
+def get_caff_ids_by_tag(tag:str,db:Session):
+    return db.query(models.Ciff).filter(models.Ciff.tags.contains(tag)).all()
+    
 def create_ciff(db:Session,ciff=schemas.CiffCreate):
     db_ciff=models.Ciff(      width=ciff.width
                               ,height=ciff.height

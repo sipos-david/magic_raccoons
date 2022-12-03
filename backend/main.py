@@ -174,6 +174,18 @@ async def read_caff_by_id_with_comments(caff_id:int,db:Session=Depends(get_db)):
     caff_dict["comments"]+=comments
     return caff_dict
 
+@app.get("/api/caffs/{tag}")
+async def get_caffs_by_tag(tag:str,db:Session=Depends(get_db)):
+    caff_ids = crud.get_caff_ids_by_tag(tag, db)
+    ret:list=[]
+    for x in caff_ids:
+        id = vars(x)
+        print (x)
+        print (id)
+        caff = crud.get_caff_by_id(id["collection_id"], db)
+        if not caff in ret:
+            ret.append(caff)
+    return ret
 
 @app.get("/api/{caff_id}/comments/{comment_id}")
 async def get_comment_by_id(caff_id:int,comment_id:int,db:Session=Depends(get_db)):
