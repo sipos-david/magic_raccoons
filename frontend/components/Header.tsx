@@ -14,6 +14,7 @@ export default function Header() {
   const navs = [
     { title: "Feltöltés", href: "/upload" },
     { title: "Események", href: "/logs" },
+    { title: "Tételek",   href: "/caff"}//TODO találóbb név
   ];
 
   if (session) {
