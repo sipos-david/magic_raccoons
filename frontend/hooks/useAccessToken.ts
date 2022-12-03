@@ -7,9 +7,11 @@ export default function useAccessToken() {
 
   useEffect((() => {
     if (session.data?.accessToken) {
-      setAccessToken(session.data.accessToken);
+      if (session.data.accessToken !== accessToken) {
+        setAccessToken(session.data.accessToken);
+      }
     }
-  }), [session]);
+  }), [session, accessToken]);
 
   if (session.data?.accessToken) {
     return session.data?.accessToken;

@@ -1,20 +1,81 @@
-import { DefaultSession } from "next-auth";
+// Needed to correctly override type
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+import NextAuth from "next-auth";
+
+declare module "next-auth/jwt" {
+    /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
+    interface JWT {
+        name: string;
+        email: string;
+        sub: string;
+        accessToken: string;
+        refreshToken: string;
+        accessTokenExpired: number;
+        refreshTokenExpired: number;
+        user: User;
+        error: string;
+    }
+}
+
 
 declare module "next-auth" {
     /**
      * Returned by `useSession`, `getSession` and received as a prop on the `SessionProvider` React Context
      */
     interface Session {
-        user: DefaultSession["user"]
+        user: {
+            sub: string;
+            email_verified: boolean;
+            name: string;
+            preferred_username: string;
+            given_name: string;
+            family_name: string;
+            email: string;
+            sid: string;
+        };
         accessToken?: string
         error?: string
     }
-}
-
-declare module "next-auth/jwt" {
-    /** Returned by the `jwt` callback and `getToken`, when using JWT sessions */
-    interface JWT {
-        refreshTokenExpires?: number
-        accesssTokenExpires?: number
+    /**
+     * The shape of the user object returned in the OAuth providers' `profile` callback,
+     * or the second parameter of the `session` callback, when using a database.
+     */
+    interface User {
+        sub: string;
+        email_verified: boolean;
+        name: string;
+        preferred_username: string;
+        given_name: string;
+        family_name: string;
+        email: string;
+        sid: string;
+    }
+    /**
+     * Usually contains information about the provider being used
+     * and also extends `TokenSet`, which is different tokens returned by OAuth Providers.
+     */
+    interface Account {
+        provider: string;
+        providerAccountId: string;
+        type: string;
+        access_token: string;
+        expires_at: number;
+        refresh_expires_in: number;
+        refresh_token: string;
+        token_type: string;
+        id_token: string;
+        "not-before-policy": number;
+        session_state: string;
+        scope: string;
+    }
+    /** The OAuth profile returned from your provider */
+    interface Profile {
+        sub: string;
+        email_verified: boolean;
+        name: string;
+        preferred_username: string;
+        given_name: string;
+        family_name: string;
+        email: string;
     }
 }
