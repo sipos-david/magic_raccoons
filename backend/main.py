@@ -18,6 +18,11 @@ from sqlalchemy.orm import Session
 import crud, models, schemas
 from database import SessionLocal, engine
 
+from os.path import exists as path_exists
+from os import makedirs
+from uuid import uuid4
+from json import load
+
 import shutil
 models.Base.metadata.create_all(bind=engine)
 
@@ -200,15 +205,15 @@ async def delete_comment_by_id(caff_id:int,comment_id:int,db:Session=Depends(get
     return crud.delete_comment_by_id(comment_id,db)
 
 @app.post("/upload_file")
-async def create_upload_file(file: UploadFile = File(...)):
+async def create_upload_file(file: UploadFile = File(...),db:Session=Depends(get_db)):
     if not file:
         return {"message": "No upload file sent"}
     else:
         if allowed_file(file.filename)==True:
             with open(f'./data/{file.filename}','wb')as buffer:
                 shutil.copyfileobj(file.file,buffer)
-            #TODO, filename
-            parse_caff("1.caff")
+            #TODO, filename átnevezni hogy ne lehessen akármi
+            parse_caff(db=db,filename=file.filename,)
             return {"message":"Uploaded successfully"}
         else:
             return{"message":"Illegal file extension"}
@@ -221,6 +226,68 @@ def allowed_file(filename):
 def parse_caff_file():
     return subprocess.run(args=['ls', '-l'])
 
-#TODO: filename-et megcsinálni, és csak akkor működik, ha linux alatt fut a backend és linux alatt lett fordítva make all-al a caff parser
-def parse_caff(filename:str):
-    subprocess.run("../caff-parser/caff_parser ./data/1.caff ./result",shell=True)
+def parse_caff(filename:str,db:Session):
+    path = '/caff/data/out/'
+    id = str(uuid4())
+    gen_path = path + str(uuid4())
+
+    while path_exists(gen_path):
+        id = str(uuid4())
+        gen_path = path + str(uuid4())
+        
+    makedirs(gen_path)
+    gen_path = gen_path + '/'           #caff/data/out/${UID}/
+
+    args = ["/caff/parser/caff_parser", "/caff/parser/res/"+filename,
+            gen_path]
+
+    cmd = " ".join(args)
+
+    output = subprocess.run(cmd, shell=True)
+
+    if output.returncode != 0:
+        exit
+
+    f = open(gen_path+"metadata.json", "r")
+    metadata = load(f)
+    f.close()
+
+    year=metadata["credits"]["year"]
+    day=metadata["credits"]["day"]
+    hour=metadata["credits"]["hour"]
+    month=metadata["credits"]["month"]
+    creator=metadata["credits"]["creator"]
+    creatorLen = len(creator)
+
+    animations = metadata["animation"]
+
+    caff = crud.create_caff(db=db, caff=schemas.CaffBase(year=year
+                                                   ,month=month
+                                                   ,day=day
+                                                   ,hour=hour
+                                                   ,minute=-1
+                                                   ,creatorlen=creatorLen
+                                                   ,creator=creator
+                                                   ,rawfile=gen_path+filename))
+
+    print(caff.id)
+        
+    for i in animations:
+        duration=i["duration"]
+        width=i["width"]
+        height=i["height"]
+        caption=i["caption"]
+        tags=';'.join(i["tags"])
+        crud.create_ciff(db=db,ciff=schemas.CiffCreate(width=width
+                                                        ,height=height
+                                                        ,collection_id=caff.id
+                                                        ,duration=duration
+                                                        ,caption=caption
+                                                        ,tags=tags
+                                                        ,previewfile='NA'))
+        
+
+    # TODO tga-ból .gif vagy valami böngésző álltal elfogadott képformátum (webp, jpeg, bmp) => bármilyen könyvtár jó, de a nevet és verzió számod írd fel
+    # TODO a készített képet lementeni a /caff/data/preview mappába {id}.gif névvel
+
+    prev_path = '/caff/data/out/' + id+'/'

@@ -5,9 +5,12 @@ class CiffBase(BaseModel):
     width:int
     height:int
     collection_id:int
+    tags:str
 
 class CiffCreate(CiffBase):
     duration:int
+    caption:str
+    previewfile:str
 
 class CommentBase(BaseModel):
     text:str
