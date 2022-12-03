@@ -12,9 +12,6 @@ const Upload: NextPage = () => {
       const form = new FormData();
       form.append("file", fileSelected);
       fetch(url, {
-        headers:{
-          "Content-Type": "multipart/form-data"
-        },
         method: "POST",
         mode: "cors",
         body: form
