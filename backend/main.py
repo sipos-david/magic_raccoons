@@ -19,9 +19,11 @@ import crud, models, schemas
 from database import SessionLocal, engine
 
 from os.path import exists as path_exists
-from os import makedirs
+from os import makedirs, listdir
 from uuid import uuid4
 from json import load
+from re import match
+from PIL import Image
 
 import shutil
 models.Base.metadata.create_all(bind=engine)
@@ -228,6 +230,7 @@ def parse_caff_file():
 
 def parse_caff(filename:str,db:Session):
     path = '/caff/data/out/'
+    preview_path = '/caff/data/preview/'
     id = str(uuid4())
     gen_path = path + str(uuid4())
 
@@ -269,8 +272,6 @@ def parse_caff(filename:str,db:Session):
                                                    ,creatorlen=creatorLen
                                                    ,creator=creator
                                                    ,rawfile=gen_path+filename))
-
-    print(caff.id)
         
     for i in animations:
         duration=i["duration"]
@@ -285,9 +286,22 @@ def parse_caff(filename:str,db:Session):
                                                         ,caption=caption
                                                         ,tags=tags
                                                         ,previewfile='NA'))
-        
+    
+    create_preview_gif(caff.id, preview_path, gen_path)
 
-    # TODO tga-ból .gif vagy valami böngésző álltal elfogadott képformátum (webp, jpeg, bmp) => bármilyen könyvtár jó, de a nevet és verzió számod írd fel
-    # TODO a készített képet lementeni a /caff/data/preview mappába {id}.gif névvel
+def create_preview_gif(caff_id, preview_path, gen_path):
+    files = listdir(gen_path)
 
-    prev_path = '/caff/data/out/' + id+'/'
+    tgas = []
+
+    preview_names = "preview\d\d*.tga"
+
+    for filename in files:
+        if match(preview_names, filename):
+            tga = Image.open(gen_path + filename)
+            tgas.append(tga)
+
+    preview_filepath = preview_path + str(caff_id) + '.gif'
+    tgas[0].save(preview_filepath, save_all=True, append_images=tgas[1:], optimize=False, duration=40, loop=0)
+    print(preview_filepath)
+    print(type(preview_filepath))
