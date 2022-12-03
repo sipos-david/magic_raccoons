@@ -1,17 +1,11 @@
 from functools import lru_cache
-import json
 import subprocess
-import sys
-from typing import Optional
 
-import requests
-from fastapi import Depends, FastAPI, HTTPException, status, File, UploadFile
-from fastapi.security import OAuth2PasswordBearer
+from fastapi import Depends, FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from jose import JWTError, jwt
-from jose.constants import ALGORITHMS
-from pydantic import BaseModel
+from fastapi.security import OAuth2PasswordBearer
+from auth import Auth, User
 
 from config import Settings
 
@@ -21,7 +15,6 @@ import models
 import schemas
 from database import SessionLocal, engine
 
-from os.path import exists as path_exists
 from os import makedirs, listdir
 from uuid import uuid4
 from json import load
@@ -29,9 +22,9 @@ from re import match
 from PIL import Image
 from starlette.responses import FileResponse
 import shutil
-models.Base.metadata.create_all(bind=engine)
 
-# Dependency
+
+models.Base.metadata.create_all(bind=engine)
 
 
 def get_db():
@@ -47,37 +40,14 @@ def get_settings():
     return Settings()
 
 
-class TokenData(BaseModel):
-    username: Optional[str] = None
-
-
-class User(BaseModel):
-    username: str
-
-
-# Why doing this?
-# Because we want to fetch public key on start
-# Later we would verify incoming JWT tokens
-try:
-    r = requests.get(get_settings().keycloak_realm_url,
-                     timeout=3)
-    r.raise_for_status()
-    response_json = r.json()
-except requests.exceptions.HTTPError as errh:
-    print("Http Error:", errh)
-    sys.exit(1)
-except requests.exceptions.ConnectionError as errc:
-    print("Error Connecting:", errc)
-    sys.exit(1)
-except requests.exceptions.Timeout as errt:
-    print("Timeout Error:", errt)
-    sys.exit(1)
-except requests.exceptions.RequestException as err:
-    print("OOps: Something Else", err)
-    sys.exit(1)
-
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
-SECRET_KEY = f'-----BEGIN PUBLIC KEY-----\r\n{response_json["public_key"]}\r\n-----END PUBLIC KEY-----'
+auth = Auth(get_settings().keycloak_realm_url)
+
+
+async def get_session_user(token: str = Depends(oauth2_scheme)):
+    user = await auth.get_user(token)
+    return user
+
 app = FastAPI()
 
 app.mount("/preview", StaticFiles(directory="../data/preview"), name="preview")
@@ -97,29 +67,6 @@ app.add_middleware(
 ALLOWED_EXTENSIONS = set(['caff'])
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)):
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
-    try:
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHMS.RS256],
-                             options={"verify_signature": True, "verify_aud": False, "exp": True})
-        username: str = payload.get("preferred_username")
-        print(token, payload)
-
-        token_data = TokenData(username=json.dumps(payload))
-    except JWTError as e:
-        print(e)
-        raise credentials_exception
-    return token_data
-
-
-async def get_current_active_user(current_user: User = Depends(get_current_user)):
-    return current_user
-
-
 @app.get("/api/logs")
 async def get_logs(db: Session = Depends(get_db)):
     return crud.get_logs(db)
@@ -135,14 +82,9 @@ async def get_users(db: Session = Depends(get_db)):
     return crud.get_logs(db)
 
 
-@app.post("/api/users")
-async def create_user(user: schemas.User, db: Session = Depends(get_db)):
-    return crud.create_user(user, db=db)
-
-
-@app.get("/users/me")
-async def get_user_id_by_username(username: str, db: Session = Depends(get_db)):
-    return crud.get_user_id_by_username(username, db)
+@app.get("/api/users/me")
+async def get_user_id_by_username(user: User = Depends(get_session_user)):
+    return user
 
 
 @app.get("/api")
