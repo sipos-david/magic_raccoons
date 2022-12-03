@@ -1,12 +1,52 @@
 import { NextPage } from "next";
 import { useRouter } from "next/router";
+import { useRef } from "react";
 import Header from "../../components/Header";
+import CaffDto from "../../dto/CaffDto";
+import useApi from "../../hooks/useApi";
 
 const Details: NextPage = () => {
   const router = useRouter();
   const { id } = router.query;
 
   const caffId = Number(id);
+
+  const { data, isLoading, isError, } = useApi<CaffDto|undefined>("/api/"+caffId);
+
+  const commentInputRef = useRef<undefined | any>(null);
+  
+  const handleClick=(id:number)=>{
+    fetch(`http://localhost:8000/download_caff/${id}`,{
+      method:"GET",
+      mode:"cors"
+    }).then((res)=>{
+      return res.blob();
+    }).then((blob) => {
+      const href = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = href;
+      link.setAttribute("download", "source.caff"); //or any other extension
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }).catch((err) => {
+      return Promise.reject({ Error: "Something Went Wrong", err });
+    });
+  }
+
+  const handleCommentClick=(id:number)=>{
+    const commentText:string=commentInputRef.current.value;
+    const data={text:commentText,date:(new Date().toISOString().toString()),author_id:0};
+    console.log(data)
+    fetch(`http://localhost:8000/api/${caffId}/comments`,{
+      method:"POST",
+      mode:"cors",
+      headers:{
+        "Content-Type":"application/json"
+      },
+      body:JSON.stringify(data)
+    });
+  }
 
   return (
     <>
@@ -15,6 +55,28 @@ const Details: NextPage = () => {
         <p>
           {caffId.toString()}
         </p>
+        <div>
+          <div>
+            <h2>{data && data.creator}</h2>
+            <h2>{data && data.year} {data?.month} {data?.day} {data?.hour}:00</h2>
+            <button onClick={()=>handleClick(caffId)}>Download caff</button>
+            <div>
+              <img src={`http://localhost:8000/preview/${caffId}.gif`} alt="" width="30" height="24" />
+            </div>
+            {(data && data.comments.map((comment)=>(
+              <div key={comment.id}>
+                <p>{comment.id}</p>
+                <p>{comment.text}</p>
+                <p>{comment.date}</p>
+              </div>
+            )))}
+            <div>
+              <div>New comment:</div>
+              <div><input type="text" id="comment_input" ref={commentInputRef}/></div>
+              <div><button onClick={()=>handleCommentClick(caffId)}>Add comment</button></div>
+            </div>
+          </div>
+        </div>
       </main>
     </>
   );
