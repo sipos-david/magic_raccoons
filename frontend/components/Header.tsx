@@ -1,8 +1,15 @@
 import { useSession, signOut, signIn } from "next-auth/react";
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function Header() {
   const { data: session } = useSession();
+
+  useEffect(() => {
+    if (session?.error === "RefreshAccessTokenError") {
+      signIn(); // Force sign in to hopefully resolve error
+    }
+  }, [session]);
 
   const navs = [
     { title: "Feltöltés", href: "/upload" },
@@ -32,9 +39,13 @@ export default function Header() {
     );
   }
   return (
-    <header>
-      Not signed in <br />
-      <button onClick={() => signIn()}>Sign in</button>
+    <header className="fixed w-full top-0 border-b bg-black text-white flex pr-4 pl-4 pt-1 pb-1">
+      <nav className="flex gap-4 items-center justify-center font-semibold ">
+        <Link href="/" className="text-2xl"><span className="text-violet-600">Caff</span>Shop</Link>
+      </nav>
+      <section className="flex grow flex-col items-end">
+        <button className="text-gray-400 hover:text-red-500" onClick={() => signIn()}>Belépés</button>
+      </section>
     </header>
   );
 }
