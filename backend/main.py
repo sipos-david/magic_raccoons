@@ -8,6 +8,7 @@ import requests
 from fastapi import Depends, FastAPI, HTTPException, status, File, UploadFile
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from jose import JWTError, jwt
 from jose.constants import ALGORITHMS
 from pydantic import BaseModel
@@ -73,6 +74,8 @@ except requests.exceptions.RequestException as err:
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 SECRET_KEY = f'-----BEGIN PUBLIC KEY-----\r\n{response_json["public_key"]}\r\n-----END PUBLIC KEY-----'
 app = FastAPI()
+
+app.mount("/preview", StaticFiles(directory="../data/preview"), name="preview")
 
 origins = [
     get_settings().ui_url,
@@ -226,19 +229,13 @@ async def create_upload_file(file: UploadFile = File(...),db:Session=Depends(get
         if allowed_file(file.filename)==True:
             with open(f'./data/{file.filename}','wb')as buffer:
                 shutil.copyfileobj(file.file,buffer)
-            #TODO, filename átnevezni hogy ne lehessen akármi
             parse_caff(db=db,filename=file.filename,)
             return {"message":"Uploaded successfully"}
         else:
             return{"message":"Illegal file extension"}
 
-
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.',1)[1].lower() in ALLOWED_EXTENSIONS
-
-@app.get("/process")
-def parse_caff_file():
-    return subprocess.run(args=['ls', '-l'])
 
 def parse_caff(filename:str,db:Session):
     path = '/caff/data/out/'
@@ -317,3 +314,4 @@ def create_preview_gif(caff_id, preview_path, gen_path):
     tgas[0].save(preview_filepath, save_all=True, append_images=tgas[1:], optimize=False, duration=40, loop=0)
     print(preview_filepath)
     print(type(preview_filepath))
+

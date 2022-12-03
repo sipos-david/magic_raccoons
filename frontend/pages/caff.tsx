@@ -16,13 +16,16 @@ const Caff: NextPage = () => {
           <div>
             {data && data.map((caff)=>(
               <div key={caff.id}>
-                 <h1>{caff.creator}</h1>
-                   <div>
-                    {caff.comments.map((comment)=>(comment.text))}
-                  </div>
+                <h1>{caff.id}</h1>
+                <div>
+                  <img src={`http://localhost:8000/preview/${caff.id}.gif`} alt="" width="30" height="24" ></img>
+                </div>
+                <div>
+                  {caff.comments.map((comment)=>(comment.text))}
+                </div>
               </div>
-             
             ))}
+            
           </div>
         </div>
       </main>
