@@ -12,7 +12,6 @@ class CiffBase(BaseModel):
 class CiffCreate(CiffBase):
     duration: int
     caption: str
-    previewfile: str
 
 
 class CommentBase(BaseModel):

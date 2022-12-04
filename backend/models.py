@@ -1,10 +1,11 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, Date,DateTime
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, Date, DateTime
 from sqlalchemy.orm import relationship
 
 from database import Base
 
+
 class Caff(Base):
-    __tablename__="caffs"
+    __tablename__ = "caffs"
 
     id = Column(Integer, primary_key=True, index=True)
     year = Column(Integer)
@@ -14,47 +15,50 @@ class Caff(Base):
     minute = Column(Integer)
     creatorLen = Column(Integer)
     creator = Column(String(256))
-    rawfile = Column(Text,nullable=False)
+    rawfile = Column(Text, nullable=False)
 
     animations = relationship("Ciff", back_populates="collection")
-    comments = relationship("Comment",back_populates="collection")
+    comments = relationship("Comment", back_populates="collection")
+
 
 class Ciff(Base):
-    __tablename__="ciffs"
-    
+    __tablename__ = "ciffs"
+
     id = Column(Integer, primary_key=True, index=True)
     duration = Column(Integer)
-    width=Column(Integer,nullable=False)
-    height=Column(Integer,nullable=False)
-    caption=Column(Text)
-    collection_id=Column(Integer,ForeignKey("caffs.id"),nullable=False)
-    previewfile=Column(Text,nullable=False) #TODO kitörölni, ha nem kell
-    tags=Column(String(256))
+    width = Column(Integer, nullable=False)
+    height = Column(Integer, nullable=False)
+    caption = Column(Text)
+    collection_id = Column(Integer, ForeignKey("caffs.id"), nullable=False)
+    tags = Column(String(256))
 
-    collection=relationship("Caff",back_populates="animations")
+    collection = relationship("Caff", back_populates="animations")
 
-    
+
 class Comment(Base):
-    __tablename__="comments"
+    __tablename__ = "comments"
 
-    id=Column(Integer,primary_key=True,index=True)
-    text=Column(Text)
-    author_id=Column(String(256))
-    date=Column(Date)
-    collection_id=Column(Integer,ForeignKey("caffs.id"),nullable=False)
+    id = Column(Integer, primary_key=True, index=True)
+    text = Column(Text)
+    author_id = Column(String(256))
+    date = Column(Date)
+    collection_id = Column(Integer, ForeignKey("caffs.id"), nullable=False)
 
-    collection=relationship("Caff",back_populates="comments")
+    collection = relationship("Caff", back_populates="comments")
+
 
 class User(Base):
-    __tablename__="users"
+    __tablename__ = "users"
 
-    user_id=Column(String(100),primary_key=True)
-    username=Column(String(100),nullable=False)
+    user_id = Column(String(100), primary_key=True)
+    username = Column(String(100), nullable=False)
+
+
 class Log(Base):
-    __tablename__="logs"
+    __tablename__ = "logs"
 
-    id=Column(Integer, primary_key=True)
-    level = Column(String(10),nullable=False)
-    text=Column(Text,nullable=False)
-    date=Column(DateTime)
-    author_id=Column(String(256),index=True,nullable=False)
+    id = Column(Integer, primary_key=True)
+    level = Column(String(10), nullable=False)
+    text = Column(Text, nullable=False)
+    date = Column(DateTime)
+    author_id = Column(String(256), index=True, nullable=False)

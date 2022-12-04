@@ -18,9 +18,16 @@ COPY ./backend ./backend
 
 RUN cd backend && pip install -r requirements.txt
 
-# TODO root helyett nem root felhasználó létrehozása a konténerben
-
 WORKDIR /caff/backend
 
 EXPOSE 80
+
+ENV SERVICE_NAME="caffservice"
+
+RUN addgroup --gid 1001 --system $SERVICE_NAME
+RUN adduser --system --ingroup $SERVICE_NAME --shell /bin/false --disabled-password --no-create-home --uid 1001 $SERVICE_NAME
+RUN chown 1001:1001 -R /caff/data
+RUN chmod 744 -R /caff/data 
+
+USER $SERVICE_NAME
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
