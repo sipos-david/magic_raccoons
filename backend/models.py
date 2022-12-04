@@ -55,6 +55,7 @@ class Log(Base):
     __tablename__="logs"
 
     id=Column(Integer, primary_key=True)
-    text=Column(Text)
+    level = Column(String(10),nullable=False)
+    text=Column(Text,nullable=False)
     date=Column(Date)
     author_id=Column(Integer)
