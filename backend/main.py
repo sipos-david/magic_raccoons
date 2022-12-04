@@ -133,11 +133,19 @@ async def read_caff_by_id_with_comments(caff_id: int, db: Session = Depends(get_
         raise HTTPException(
             status_code=400, detail="There is not a Caff with id: "+str(caff_id))
     comments = crud.get_comments_by_collection_id(collection_id=caff_id, db=db)
+    comment_dict=[]
+    for comment in comments:
+        print(vars(comment))
+        author = crud.get_user_by_userid(db=db,user_id=comment.author_id)
+        if (caff == None):
+            username = "Anonymus"
+        else:
+            username = author.username
+        comment_element={"text":comment.text,"username":username,"date":comment.date}
+        comment_dict.append(comment_element)
     caff_dict = vars(caff)
-    print(type(comments))
-    print(comments)
-    caff_dict['comments'] = []
-    caff_dict["comments"] += comments
+    caff_dict["comments"] = []
+    caff_dict["comments"] += comment_dict
     return caff_dict
 
 
