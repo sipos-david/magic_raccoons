@@ -6,6 +6,7 @@ import useApi from "../hooks/useApi";
 const Caff: NextPage = () => {
   const { data, isLoading, isError, } = useApi<CaffDto[]>("/api");
 
+  //TODO link a details page/re
 
   return (
     <>

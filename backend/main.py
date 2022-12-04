@@ -72,6 +72,8 @@ ALLOWED_EXTENSIONS = set(['caff'])
 # TODO caff fájl keresés query paraméterekkel
 # TODO nem használt endpoint-ok törlése
 
+async def log(level:str,user_id:str,text:str):
+    return ((crud.create_log(schemas.Log(level=level,text=text,date=Date(),author_id=user_id)))==None)
 
 @app.get("/api/logs")
 async def get_logs(db: Session = Depends(get_db), user: User = Depends(get_session_user)):
@@ -94,7 +96,7 @@ async def get_user_id_by_username(user: User = Depends(get_session_user),db: Ses
 
 
 @app.get("/api")
-async def read_caffs(db: Session = Depends(get_db)):
+async def read_caffs(db: Session = Depends(get_db),user:User = Depends(get_session_user)):
     caffs = crud.get_caffs(db)
     return caffs
 
