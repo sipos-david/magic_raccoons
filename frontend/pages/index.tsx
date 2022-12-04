@@ -41,7 +41,7 @@ const Home: NextPage = () => {
               <LoadingSpinner />
             </div>
           }
-          {isError && <p>Error</p>}
+          {isError && <div className="text-xl mt-32">Hiba történt :,(</div>}
           {!isLoading && !isError && data && data.map((caff) => (
             <div key={caff.id} className="border border-solid border-gray-400 bg-gray-50 p-4 m-2 rounded">
               <Link href={`/details/${caff.id}`}>

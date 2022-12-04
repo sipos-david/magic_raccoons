@@ -63,7 +63,7 @@ const Details: NextPage = () => {
         {
           isLoading && <LoadingSpinner />
         }
-        {!isLoading && isError && <div>Hiba történt</div>}
+        {!isLoading && isError && <div className="text-xl mt-32">Hiba történt :,(</div>}
         {!isLoading && !isError && caffId !== undefined && data &&
           <>
             <Image className="rounded w-auto h-auto max-w-3xl max-h-max" priority src={`http://localhost:8000/preview/${caffId}.gif`} alt="Caff preview gif" width={0} height={0}></Image>
