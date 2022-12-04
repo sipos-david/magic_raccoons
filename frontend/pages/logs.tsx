@@ -23,7 +23,7 @@ const Logs: NextPage = () => {
             return (
               <div key={id} className="m-2 flex flex-row items-center">
                 <span className="flex flex-col grow">
-                  <p className="w-fit pb-1 border-b-2 border-violet-500"><span className="text-lg inline-block w-16 font-bold pr-1 border-r-2 mr-3 border-gray-500">{log.level}</span><span className="text-lg mr-3">{log.username}</span><span className="text-gray-500">{log.date}</span></p>
+                  <p className="w-fit pb-1 border-b-2 border-violet-500"><span className="text-lg inline-block w-24 font-bold pr-1 border-r-2 mr-3 border-gray-500">{log.level}</span><span className="text-gray-500">{log.date}</span></p>
                   <p>{log.text}</p>
                 </span>
               </div>

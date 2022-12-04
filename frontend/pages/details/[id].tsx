@@ -116,6 +116,7 @@ function CommentEdit({ comment, caffId, onCancel }: CommentEditProps) {
   const [commentText, setCommentText] = useState(comment.text);
 
   const handleCommentDeleteClick = () => {
+    onCancel();
     mutate(`/api/${caffId}/comments/${comment.id}`, "DELETE", undefined)?.then((response) => {
       if (response.ok) {
         showSnackbar({ text: "Komment törölve", severity: "success" });
@@ -130,6 +131,7 @@ function CommentEdit({ comment, caffId, onCancel }: CommentEditProps) {
 
   const handleCommentEditClick = () => {
     if (commentText && commentText.length !== 0) {
+      onCancel();
       mutate(`/api/${caffId}/comments/${comment.id}`, "PUT", { text: commentText })?.then((response) => {
         if (response.ok) {
           showSnackbar({ text: "Komment frissítve", severity: "success" });
