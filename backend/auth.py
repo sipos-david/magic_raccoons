@@ -139,7 +139,7 @@ class Auth:
             raise credentials_exception
         return token_data
 
-    async def get_user(self, token) -> User:
+    async def get_user(self, token) -> User | None:
         try:
             jwt = await self.__parse_jwt(token)
             role = Role.USER
@@ -148,4 +148,4 @@ class Auth:
             return User(id=jwt.sub, name=jwt.name, role=role)
         except Exception as e:
             print(e)
-            raise HTTPException(status_code=401, detail="Invalid token")
+            return None
