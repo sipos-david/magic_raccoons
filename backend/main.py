@@ -132,6 +132,28 @@ async def get_user_id_by_username(user: User = Depends(get_session_user), db: Se
     return user
 
 
+@app.get("/api")
+async def read_caffs(tag: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
+    if tag is None:
+        caffs = crud.get_caffs(db)
+        return caffs
+    caff_ids = crud.get_caff_ids_by_tag(tag, db)
+    ret: list = []
+    for x in caff_ids:
+        caff_id = vars(x)
+        print(x)
+        print(caff_id)
+        caff = crud.get_caff_by_id(caff_id["collection_id"], db)
+        if caff not in ret:
+            ret.append(caff)
+    return ret
+
+
+@app.post("/api")
+async def create_caff(caff: schemas.CaffBase, db: Session = Depends(get_db)):
+    return crud.create_caff(db=db, caff=caff)
+
+
 @app.get("/api/")
 async def read_caffs_with_comments(db: Session = Depends(get_db)):
     caffs = crud.get_caffs(db)
@@ -289,6 +311,6 @@ def create_preview_gif(caff_id, preview_path, gen_path):
 
     preview_filepath = preview_path + str(caff_id) + '.gif'
     tgas[0].save(preview_filepath, save_all=True,
-                 append_images=tgas[1:], optimize=False, duration=40, loop=0)
+                 append_images=tgas[1:], optimize=False, duration=1000, loop=0)
     print(preview_filepath)
     print(type(preview_filepath))

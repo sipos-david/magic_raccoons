@@ -4,6 +4,7 @@ import "../styles/globals.css";
 import type { AppProps } from "next/app";
 import Head from "next/head";
 import { SnackbarProvider } from "../context/snackbarContext";
+import { UserProvider } from "../context/userContext";
 
 export default function App({ Component, pageProps: { session, ...pageProps }, }: AppProps) {
   return (
@@ -15,7 +16,9 @@ export default function App({ Component, pageProps: { session, ...pageProps }, }
       </Head>
       <SessionProvider session={session} refetchInterval={4 * 60}>
         <SnackbarProvider>
-          <Component {...pageProps} />
+          <UserProvider>
+            <Component {...pageProps} />
+          </UserProvider>
         </SnackbarProvider>
       </SessionProvider>
     </>
