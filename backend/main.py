@@ -83,9 +83,9 @@ class Action(Enum):
 class Logger:
     template_msg = "User with ID %s %s %s %s."
     
-    async def log(level: str, user_id: str, text: str = ""):
+    def log(level: str, user_id: str, text: str = "",db: Session = Depends(get_db)):
         print ("vmi")
-        crud.create_log(schemas.Log(level=level, text=text, date=datetime(), author_id=user_id))
+        crud.create_log(schemas.Log(level=level, text=text, date=datetime.now(),author_id=user_id),db=db)
     
     def create_msg(user_id: str, action: Action, problem: str, entity: str):
         return Logger.template_msg % (user_id, problem, action, entity)
@@ -110,7 +110,7 @@ class Logger:
 async def get_logs(db: Session = Depends(get_db), user: User = Depends(get_session_user)):
     if user == None:
         msg = Logger.create_invalid_token_msg()
-        Logger.log(Loglevel.ERROR, user_id=None, text=msg)
+        Logger.log(Loglevel.ERROR, user_id='NA', text=msg)
         raise HTTPException(status_code=401, detail="Invalid token")
         
     if user.role != Role.ADMIN:
@@ -134,6 +134,7 @@ async def get_user_id_by_username(user: User = Depends(get_session_user), db: Se
 
 @app.get("/api")
 async def read_caffs(tag: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
+    
     if tag is None:
         caffs = crud.get_caffs(db)
         return caffs
@@ -155,7 +156,8 @@ async def create_caff(caff: schemas.CaffBase, db: Session = Depends(get_db)):
 
 
 @app.get("/api/")
-async def read_caffs_with_comments(db: Session = Depends(get_db)):
+async def read_caffs_with_comments(db: Session = Depends(get_db),user: User = Depends(get_session_user)):
+    
     caffs = crud.get_caffs(db)
     ret: list = []
     for x in caffs:
@@ -165,6 +167,30 @@ async def read_caffs_with_comments(db: Session = Depends(get_db)):
         element["comments"] += comments
         ret.append(element)
     return ret
+
+@app.get("/api/{caff_id}")
+async def read_caff_by_id_with_comments(caff_id: int, db: Session = Depends(get_db),user: User = Depends(get_session_user)):
+    Logger.log("INFO","NA","Accessed /api",db=db)
+    caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
+    if (caff == None):
+        raise HTTPException(
+            status_code=400, detail="There is not a Caff with id: "+str(caff_id))
+    comments = crud.get_comments_by_collection_id(collection_id=caff_id, db=db)
+    comment_dict = []
+    for comment in comments:
+        print(vars(comment))
+        author = crud.get_user_by_userid(db=db, user_id=comment.author_id)
+        if (author == None):
+            username = "Anonymus"
+        else:
+            username = author.username
+        comment_element = {"text": comment.text, "username": username,
+                           "date": comment.date, "id": comment.id}
+        comment_dict.append(comment_element)
+    caff_dict = vars(caff)
+    caff_dict["comments"] = []
+    caff_dict["comments"] += comment_dict
+    return caff_dict
 
 
 @app.post("/api/{caff_id}/comments")
@@ -203,7 +229,8 @@ async def update_comment_by_id(caff_id: int, comment_id: int, comment: schemas.C
 
 
 @app.delete("/api/{caff_id}")
-async def delete_caff_by_id(caff_id: int, db: Session = Depends(get_db)):
+async def delete_caff_by_id(caff_id: int, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
+    Logger.log("INFO","NA","Accessed /api/")
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
     if (caff == None):
         raise HTTPException(

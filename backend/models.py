@@ -1,4 +1,4 @@
-from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, Date
+from sqlalchemy import Boolean, Column, ForeignKey, Integer, String, Text, Date,DateTime
 from sqlalchemy.orm import relationship
 
 from database import Base
@@ -56,5 +56,5 @@ class Log(Base):
     id=Column(Integer, primary_key=True)
     level = Column(String(10),nullable=False)
     text=Column(Text,nullable=False)
-    date=Column(Date)
-    author_id=Column(Integer)
+    date=Column(DateTime)
+    author_id=Column(String(20),index=True,nullable=False)

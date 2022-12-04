@@ -40,7 +40,7 @@ class Log(BaseModel):
     text:str
     level:str
     date:datetime
-    author_id:int
+    author_id:str
 
 class User(BaseModel):
     user_id:str
