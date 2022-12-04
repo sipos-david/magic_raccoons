@@ -49,7 +49,7 @@ const Home: NextPage = () => {
               </Link>
               <div className="flex flex-row justify-between mt-1">
                 <span className="font-semibold text-lg">{caff.creator}</span>
-                <span className="text-gray-600">{caff.year}.{caff.month}.{caff.day}</span>
+                <span className="text-gray-600">{caff.year}.{caff.month < 10 ? "0" : ""}{caff.month}.{caff.day < 10 ? "0" : ""}{caff.day}</span>
               </div>
             </div>
           ))}
