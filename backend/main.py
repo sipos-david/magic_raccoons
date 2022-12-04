@@ -46,8 +46,19 @@ oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 auth = Auth(get_settings().keycloak_realm_url)
 
 
-async def get_session_user(token: str = Depends(oauth2_scheme)):
+async def save_user(user: User, db: Session):
+    db_user = crud.get_user_by_userid(user.id, db)
+    if db_user is None:
+        db_user = crud.create_user(db=db, user=user)
+    return db_user
+
+
+async def get_session_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     user = await auth.get_user(token)
+    if user is None:
+        raise HTTPException(
+            status_code=401, detail="Invalid authentication credentials")
+    save_user(user, db)
     return user
 
 app = FastAPI()
@@ -68,42 +79,43 @@ app.add_middleware(
 
 ALLOWED_EXTENSIONS = set(['caff'])
 
-# TODO user: User = Depends(get_session_user) minden hívás elé token ellenőrzés miatt, ahol kell role ellenőrzés
 
 class Loglevel(Enum):
-    WARNING: str = "WARNING",
-    ERROR: str = "ERROR"
+    WARNING = "WARNING",
+    ERROR = "ERROR"
+
 
 class Action(Enum):
-    GET: str = "GET",
-    POST: str = "CREATED",
-    PUT: str =  "EDITED",
-    DELETE: str = "DELTED"
+    GET = "GET",
+    POST = "CREATED",
+    PUT = "EDITED",
+    DELETE = "DELTED"
+
 
 class Logger:
     template_msg = "User with ID %s %s %s %s."
-    
-    def log(level: str, user_id: str, text: str = "",db: Session = Depends(get_db)):
-        print ("vmi")
-        crud.create_log(schemas.Log(level=level, text=text, date=datetime.now(),author_id=user_id),db=db)
-    
-    def create_msg(user_id: str, action: Action, problem: str, entity: str):
+
+    def log(self, level: str, user_id: str, text: str = "", db: Session = Depends(get_db)):
+        crud.create_log(schemas.Log(level=level, text=text,
+                        date=datetime.now(), author_id=user_id), db=db)
+
+    def create_msg(self, user_id: str, action: Action, problem: str, entity: str):
         return Logger.template_msg % (user_id, problem, action, entity)
-    
-    def create_notfound_msg(user_id: str, action: Action, entity: str):
+
+    def create_notfound_msg(self, user_id: str, action: Action, entity: str):
         return Logger.create_msg(user_id, " did not find entity when trying to ", action, entity)
-        
-    def create_unauthorized_user_msg(user_id: str, action: Action, entity: str):
+
+    def create_unauthorized_user_msg(self, user_id: str, action: Action, entity: str):
         return Logger.create_msg(user_id, " is not authorized to ", action, entity)
-    
-    def create_user_not_found_msg(user_id: str, action: Action, entity: str):
+
+    def create_user_not_found_msg(self, user_id: str, action: Action, entity: str):
         return Logger.create_msg(user_id, " is not found. Action tried: ", action, entity)
-    
-    def create_action_msg(user_id: str, action: Action, entity: str):
+
+    def create_action_msg(self, user_id: str, action: Action, entity: str):
         return Logger.create_msg(user_id, " ", action, entity)
-    
-    def create_invalid_token_msg():
-        return "Invalid token."    
+
+    def create_invalid_token_msg(self, ):
+        return "Invalid token."
 
 
 @app.get("/api/logs")
@@ -112,13 +124,13 @@ async def get_logs(db: Session = Depends(get_db), user: User = Depends(get_sessi
         msg = Logger.create_invalid_token_msg()
         Logger.log(Loglevel.ERROR, user_id='NA', text=msg)
         raise HTTPException(status_code=401, detail="Invalid token")
-        
+
     if user.role != Role.ADMIN:
         msg = Logger.create_unauthorized_user_msg(user.id, Action.GET, "log")
         Logger.log(Loglevel.ERROR, user_id=user.id, text=msg)
         raise HTTPException(status_code=403, detail="Forbidden")
-    
-    msg = Logger.create_action_msg(user.id, action.GET, "log")
+
+    msg = Logger.create_action_msg(user.id, Action.GET, "log")
     Logger.log(Loglevel.ERROR, user_id=user.id, text=msg)
     return crud.get_logs(db)
 
@@ -134,7 +146,6 @@ async def get_user_id_by_username(user: User = Depends(get_session_user), db: Se
 
 @app.get("/api")
 async def read_caffs(tag: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
-    
     if tag is None:
         caffs = crud.get_caffs(db)
         return caffs
@@ -142,8 +153,6 @@ async def read_caffs(tag: str | None = None, db: Session = Depends(get_db), user
     ret: list = []
     for x in caff_ids:
         caff_id = vars(x)
-        print(x)
-        print(caff_id)
         caff = crud.get_caff_by_id(caff_id["collection_id"], db)
         if caff not in ret:
             ret.append(caff)
@@ -151,13 +160,12 @@ async def read_caffs(tag: str | None = None, db: Session = Depends(get_db), user
 
 
 @app.post("/api")
-async def create_caff(caff: schemas.CaffBase, db: Session = Depends(get_db)):
+async def create_caff(caff: schemas.CaffBase, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
     return crud.create_caff(db=db, caff=caff)
 
 
 @app.get("/api/")
-async def read_caffs_with_comments(db: Session = Depends(get_db),user: User = Depends(get_session_user)):
-    
+async def read_caffs_with_comments(db: Session = Depends(get_db), user: User = Depends(get_session_user)):
     caffs = crud.get_caffs(db)
     ret: list = []
     for x in caffs:
@@ -168,9 +176,10 @@ async def read_caffs_with_comments(db: Session = Depends(get_db),user: User = De
         ret.append(element)
     return ret
 
+
 @app.get("/api/{caff_id}")
-async def read_caff_by_id_with_comments(caff_id: int, db: Session = Depends(get_db),user: User = Depends(get_session_user)):
-    Logger.log("INFO","NA","Accessed /api",db=db)
+async def read_caff_by_id_with_comments(caff_id: int, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
+    Logger.log("INFO", "NA", "Accessed /api", db=db)
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
     if (caff == None):
         raise HTTPException(
@@ -178,7 +187,6 @@ async def read_caff_by_id_with_comments(caff_id: int, db: Session = Depends(get_
     comments = crud.get_comments_by_collection_id(collection_id=caff_id, db=db)
     comment_dict = []
     for comment in comments:
-        print(vars(comment))
         author = crud.get_user_by_userid(db=db, user_id=comment.author_id)
         if (author == None):
             username = "Anonymus"
@@ -204,7 +212,7 @@ async def create_comment_to_caff(caff_id: int, comment: schemas.CommentBase, db:
 
 
 @app.get("/download_caff/{caff_id}", response_class=FileResponse)
-async def download_caff(caff_id: int, db: Session = Depends(get_db)):
+async def download_caff(caff_id: int, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
     if (caff == None):
         raise HTTPException(
@@ -214,7 +222,10 @@ async def download_caff(caff_id: int, db: Session = Depends(get_db)):
 
 
 @app.put("/api/{caff_id}/comments/{comment_id}")
-async def update_comment_by_id(caff_id: int, comment_id: int, comment: schemas.CommentBase, db: Session = Depends(get_db)):
+async def update_comment_by_id(caff_id: int, comment_id: int, comment: schemas.CommentUpdate, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
+    if (user.role != Role.ADMIN):
+        raise HTTPException(
+            status_code=403, detail="ADMIN only functionality")
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
     if (caff == None):
         raise HTTPException(
@@ -223,31 +234,33 @@ async def update_comment_by_id(caff_id: int, comment_id: int, comment: schemas.C
     if (comment_ret == None):
         raise HTTPException(
             status_code=400, detail="There is not a comment with id: "+str(comment_id))
+    edited_comment = comment_ret
+    edited_comment.text = comment.text
     comment_updated = crud.update_comment_by_id(
-        comment_id=comment_id, comment=comment, db=db)
+        comment_id=comment_id, comment=edited_comment, db=db)
     return comment_updated
 
 
 @app.delete("/api/{caff_id}")
 async def delete_caff_by_id(caff_id: int, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
-    Logger.log("INFO","NA","Accessed /api/")
+    if (user.role != Role.ADMIN):
+        raise HTTPException(
+            status_code=403, detail="ADMIN only functionality")
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
     if (caff == None):
         raise HTTPException(
             status_code=400, detail="There is not a Caff with id: "+str(caff_id))
-    is_successful = crud.delete_caff_by_id (caff_id,db)
+    is_successful = crud.delete_caff_by_id(caff_id, db)
     if not is_successful:
         raise HTTPException(
             status_code=400, detail="Could not delete Caff with id: "+str(caff_id))
-    return
-        
+
 
 @app.delete("/api/{caff_id}/comments/{comment_id}")
 async def delete_comment_by_id(caff_id: int, comment_id: int, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
-    if (user.role != "ADMIN"):
+    if (user.role != Role.ADMIN):
         raise HTTPException(
             status_code=403, detail="ADMIN only functionality")
-        return None
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
     if (caff == None):
         raise HTTPException(
@@ -260,7 +273,7 @@ async def delete_comment_by_id(caff_id: int, comment_id: int, db: Session = Depe
 
 
 @app.post("/upload_file")
-async def create_upload_file(file: UploadFile = File(...), db: Session = Depends(get_db)):
+async def create_upload_file(file: UploadFile = File(...), db: Session = Depends(get_db), user: User = Depends(get_session_user)):
     if not file:
         return {"message": "No upload file sent"}
     else:
@@ -339,5 +352,3 @@ def create_preview_gif(caff_id, preview_path, gen_path):
     preview_filepath = preview_path + str(caff_id) + '.gif'
     tgas[0].save(preview_filepath, save_all=True,
                  append_images=tgas[1:], optimize=False, duration=1000, loop=0)
-    print(preview_filepath)
-    print(type(preview_filepath))

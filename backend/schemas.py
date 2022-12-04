@@ -1,48 +1,57 @@
 from pydantic import BaseModel
-from datetime import datetime 
+from datetime import datetime
+
 
 class CiffBase(BaseModel):
-    width:int
-    height:int
-    collection_id:int
-    tags:str
+    width: int
+    height: int
+    collection_id: int
+    tags: str
+
 
 class CiffCreate(CiffBase):
-    duration:int
-    caption:str
-    previewfile:str
+    duration: int
+    caption: str
+    previewfile: str
+
 
 class CommentBase(BaseModel):
-    text:str
-    date:datetime
-    author_id:int
+    text: str
+    date: datetime
+    author_id: int
+
+
+class CommentUpdate(BaseModel):
+    text: str
+
 
 class Comment(CommentBase):
-    id:int
-    collection_id:int
+    id: int
+    collection_id: int
+
 
 class CaffBase(BaseModel):
-    year:int
-    month:int
-    day:int
-    hour:int
-    minute:int
-    creatorlen:int
-    creator:str
-    rawfile:str
+    year: int
+    month: int
+    day: int
+    hour: int
+    minute: int
+    creatorlen: int
+    creator: str
+    rawfile: str
 
 
 class Caff(CaffBase):
-    id:int
-    
+    id: int
+
 
 class Log(BaseModel):
-    text:str
-    level:str
-    date:datetime
-    author_id:str
+    text: str
+    level: str
+    date: datetime
+    author_id: str
+
 
 class User(BaseModel):
-    user_id:str
-    username:str
-
+    user_id: str
+    username: str

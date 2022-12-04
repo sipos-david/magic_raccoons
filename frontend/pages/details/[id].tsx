@@ -130,7 +130,7 @@ function CommentEdit({ comment, caffId, onCancel }: CommentEditProps) {
 
   const handleCommentEditClick = () => {
     if (commentText && commentText.length !== 0) {
-      mutate(`/api/${caffId}/comments/${comment.id}`, "PUT", undefined)?.then((response) => {
+      mutate(`/api/${caffId}/comments/${comment.id}`, "PUT", { text: commentText })?.then((response) => {
         if (response.ok) {
           showSnackbar({ text: "Komment frissítve", severity: "success" });
         } else {
