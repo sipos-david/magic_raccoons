@@ -17,7 +17,6 @@ export default function Header() {
   const navs = [
     { title: "Feltöltés", href: "/upload" },
     { title: "Események", href: "/logs" },
-    { title: "Tételek", href: "/caff" }//TODO találóbb név
   ];
 
   if (session) {
@@ -34,11 +33,11 @@ export default function Header() {
             </Link>)}
         </nav>
         <section className="flex grow flex-col items-end">
-          <div className="flex flex-row">
+          <div className="flex flex-row items-center">
             <span className="text-lg">
               {session.user?.name}
             </span>
-            <Image className="ml-2" src="/admin.svg" alt="Admin privileges icon" width={24} height={24} />
+            <Image className="ml-2 w-6 h-6" src="/admin.svg" alt="Admin privileges icon" width={24} height={24} />
           </div>
           <button onClick={() => signOut()} className="text-gray-400 hover:text-red-500">Kilépés</button>
         </section>
