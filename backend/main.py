@@ -140,11 +140,11 @@ async def read_caff_by_id_with_comments(caff_id: int, db: Session = Depends(get_
     for comment in comments:
         print(vars(comment))
         author = crud.get_user_by_userid(db=db,user_id=comment.author_id)
-        if (caff == None):
+        if (author == None):
             username = "Anonymus"
         else:
             username = author.username
-        comment_element={"text":comment.text,"username":username,"date":comment.date}
+        comment_element={"text":comment.text,"username":username,"date":comment.date,"id":comment.id}
         comment_dict.append(comment_element)
     caff_dict = vars(caff)
     caff_dict["comments"] = []
@@ -219,7 +219,11 @@ async def delete_comment_by_id(caff_id: int, db: Session = Depends(get_db)):
         
 
 @app.delete("/api/{caff_id}/comments/{comment_id}")
-async def delete_comment_by_id(caff_id: int, comment_id: int, db: Session = Depends(get_db)):
+async def delete_comment_by_id(caff_id: int, comment_id: int, db: Session = Depends(get_db),user:User = Depends(get_session_user)):
+    if(user.role != "ADMIN"):
+        raise HTTPException(
+            status_code=403, detail="ADMIN only functionality")
+        return None        
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
     if (caff == None):
         raise HTTPException(

@@ -5,12 +5,13 @@ import Header from "../../components/Header";
 import CaffDto from "../../dto/CaffDto";
 import useApi from "../../hooks/useApi";
 import useMutate from "../../hooks/useMutate";
+import { useSnackbar } from "../../context/snackbarContext";
 
 const Details: NextPage = () => {
   const router = useRouter();
   const { id } = router.query;
   const caffId = Number(id);
-
+  const { showSnackbar } = useSnackbar();
   const { data, isLoading, isError } = useApi<CaffDto | undefined>("/api/" + caffId);
   const { mutate } = useMutate();
 
@@ -32,14 +33,27 @@ const Details: NextPage = () => {
     });
   };
 
-  // TODO komment törlése
   // TODO komment szerkesztése
   // TODO ui csinosítás
 
   const handleAddCommentClick = () => {
     const commentText: string = commentInputRef.current.value;
+    console.log("add comment with "+commentText);
     const data = { text: commentText, date: (new Date().toISOString().toString()), author_id: 0 };
     mutate(`/api/${caffId}/comments`, "POST", data);
+  };
+
+  const handleCommentDeleteClick=(id:number)=>{
+    mutate(`/api/${caffId}/comments/${id}`,"DELETE",undefined)?.then((response)=>{
+      if (response.ok) {
+        showSnackbar({ text: "Komment törölve", severity: "success" });
+      } else {
+        showSnackbar({ text: "Komment törlése sikertelen", severity: "error" });
+        response.json().then((data) => {
+          console.error(data);
+        });
+      }
+    });
   };
 
   return (
@@ -59,15 +73,16 @@ const Details: NextPage = () => {
             </div>
             {(data && data.comments.map((comment) => (
               <div key={comment.id}>
-                <p>{comment.id}</p>
-                <p>{comment.text}</p>
-                <p>{comment.date}</p>
+                <p>id: {comment.id}</p>
+                <p>text:  {comment.text}</p>
+                <p>date:  {comment.date}</p>
+                <button onClick={()=>handleCommentDeleteClick(comment.id)}>Delete comment</button>
               </div>
             )))}
             <div>
               <div>New comment:</div>
               <div><input type="text" id="comment_input" ref={commentInputRef} /></div>
-              <div><button onClick={() => handleAddCommentClick}>Add comment</button></div>
+              <div><button onClick={() => handleAddCommentClick()}>Add comment</button></div>
             </div>
           </div>
         </div>
