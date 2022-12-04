@@ -71,8 +71,6 @@ ALLOWED_EXTENSIONS = set(['caff'])
 # TODO caff fájl törlés
 # TODO caff fájl keresés query paraméterekkel
 # TODO nem használt endpoint-ok törlése
-# TODO kommmentekben leküldött userId helyett db-ből lekérdezni vagy Anonymous ha nincs
-# TODO belépett felhasználót lementeni db-ben ha nincs benne
 
 
 @app.get("/api/logs")
@@ -88,7 +86,10 @@ async def get_users(db: Session = Depends(get_db)):
 
 
 @app.get("/api/users/me")
-async def get_user_id_by_username(user: User = Depends(get_session_user)):
+async def get_user_id_by_username(user: User = Depends(get_session_user),db: Session = Depends(get_db)):
+    tmp_user = crud.get_user_by_userid(user_id=user.id,db=db)
+    if(tmp_user == None):
+        crud.create_user(schemas.User(user_id=str(user.id),username=str(user.name)),db=db)
     return user
 
 
