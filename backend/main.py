@@ -141,7 +141,7 @@ async def read_caff_by_id_with_comments(caff_id: int, db: Session = Depends(get_
     return caff_dict
 
 
-@app.get("/api/caffs/{tag}")
+@app.get("/api/search?tag=")
 async def get_caffs_by_tag(tag: str, db: Session = Depends(get_db)):
     caff_ids = crud.get_caff_ids_by_tag(tag, db)
     ret: list = []
