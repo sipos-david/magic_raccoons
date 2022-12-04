@@ -193,6 +193,20 @@ async def update_comment_by_id(caff_id: int, comment_id: int, comment: schemas.C
     return comment_updated
 
 
+@app.delete("/api/{caff_id}")
+async def delete_comment_by_id(caff_id: int, db: Session = Depends(get_db)):
+    caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
+    if (caff == None):
+        raise HTTPException(
+            status_code=400, detail="There is not a Caff with id: "+str(caff_id))
+    is_successful = crud.delete_caff_by_id (caff_id,db)
+    if is_successful:
+        return response.ok
+    else:
+        raise HTTPException(
+            status_code=400, detail="Could not delete Caff with id: "+str(caff_id))
+        
+
 @app.delete("/api/{caff_id}/comments/{comment_id}")
 async def delete_comment_by_id(caff_id: int, comment_id: int, db: Session = Depends(get_db)):
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)

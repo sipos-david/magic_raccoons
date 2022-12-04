@@ -76,6 +76,24 @@ def delete_comment_by_id(comment_id:int,db:Session):
     db.commit()
     return result
 
+def delete_caff_by_id(caff_id:int,db:Session):
+    try:
+        caff = get_caff_by_id(caff_id, db)
+        ciffs = __get_ciffs_by_caff_id(caff_id, db)
+        comments = __get_comments_by_caff_id(caff_id, db)
+        for comment in comments:
+            db.delete(comment)
+        for ciff in ciffs:
+            db.delete(ciff)
+        db.delete(caff)
+        db.commit()
+        return True
+    except Exception as e:
+        # TODO log
+        db_session.rollback()
+        db_session.flush()
+        return False
+
 def get_logs(db:Session):
     db_caff= db.query(models.Log).all()
     return db_caff
@@ -102,3 +120,9 @@ def create_user(user:schemas.User,db:Session):
     db.commit()
     db.refresh(model_user)
     return model_user
+
+def __get_ciffs_by_caff_id(caff_id,db:Session):
+    return db.query(models.Ciff).filter(models.Ciff.collection_id == caff_id)
+
+def __get_comments_by_caff_id(caff_id,db:Session):
+    return db.query(models.Comment).filter(models.Comment.collection_id == caff_id)
