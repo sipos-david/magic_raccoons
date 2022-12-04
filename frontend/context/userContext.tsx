@@ -1,3 +1,4 @@
+import { signIn } from "next-auth/react";
 import { createContext, useContext, ReactNode, Fragment } from "react";
 import useApi from "../hooks/useApi";
 
@@ -29,6 +30,10 @@ const _UserProvider = ({ children }: UserProviderProps) => {
   let user: User | undefined = undefined;
   if (!isError && !isLoading && data && isUser(data)) {
     user = data;
+  }
+
+  if (isError) {
+    signIn(); // Force sign in to hopefully resolve error
   }
 
   return (
