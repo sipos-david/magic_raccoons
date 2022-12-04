@@ -115,6 +115,9 @@ def get_users(db:Session):
 def get_user_id_by_username(username:str, db:Session):
     return db.query(models.User).filter(models.User.username == username).first()
 
+def get_user_by_userid(user_id:str,db:Session):
+    return db.query(models.User).filter(models.User.user_id==user_id).first()
+
 def create_user(user:schemas.User,db:Session):
     model_user=models.User(user_id=user.user_id,username=user.username)
     db.add(model_user)

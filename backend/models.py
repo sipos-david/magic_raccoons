@@ -50,7 +50,6 @@ class User(Base):
 
     user_id=Column(String(100),primary_key=True)
     username=Column(String(100),nullable=False)
-
 class Log(Base):
     __tablename__="logs"
 

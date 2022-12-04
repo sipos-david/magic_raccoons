@@ -67,7 +67,7 @@ const Details: NextPage = () => {
             <div>
               <div>New comment:</div>
               <div><input type="text" id="comment_input" ref={commentInputRef} /></div>
-              <div><button onClick={() => handleAddCommentClick(caffId)}>Add comment</button></div>
+              <div><button onClick={() => handleAddCommentClick}>Add comment</button></div>
             </div>
           </div>
         </div>
