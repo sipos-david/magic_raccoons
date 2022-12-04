@@ -57,4 +57,4 @@ class Log(Base):
     level = Column(String(10),nullable=False)
     text=Column(Text,nullable=False)
     date=Column(DateTime)
-    author_id=Column(String(20),index=True,nullable=False)
+    author_id=Column(String(256),index=True,nullable=False)
