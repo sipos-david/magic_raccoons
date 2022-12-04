@@ -99,7 +99,7 @@ async def get_user_id_by_username(user: User = Depends(get_session_user), db: Se
 
 
 @app.get("/api")
-async def read_caffs(tag: str | None, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
+async def read_caffs(tag: str | None = None, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
     if tag is None:
         caffs = crud.get_caffs(db)
         return caffs
@@ -315,6 +315,6 @@ def create_preview_gif(caff_id, preview_path, gen_path):
 
     preview_filepath = preview_path + str(caff_id) + '.gif'
     tgas[0].save(preview_filepath, save_all=True,
-                 append_images=tgas[1:], optimize=False, duration=40, loop=0)
+                 append_images=tgas[1:], optimize=False, duration=1000, loop=0)
     print(preview_filepath)
     print(type(preview_filepath))
