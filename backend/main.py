@@ -72,8 +72,10 @@ ALLOWED_EXTENSIONS = set(['caff'])
 # TODO caff fájl keresés query paraméterekkel
 # TODO nem használt endpoint-ok törlése
 
-async def log(level:str,user_id:str,text:str):
-    return ((crud.create_log(schemas.Log(level=level,text=text,date=Date(),author_id=user_id)))==None)
+
+async def log(level: str, user_id: str, text: str):
+    return ((crud.create_log(schemas.Log(level=level, text=text, date=Date(), author_id=user_id))) == None)
+
 
 @app.get("/api/logs")
 async def get_logs(db: Session = Depends(get_db), user: User = Depends(get_session_user)):
@@ -88,17 +90,29 @@ async def get_users(db: Session = Depends(get_db)):
 
 
 @app.get("/api/users/me")
-async def get_user_id_by_username(user: User = Depends(get_session_user),db: Session = Depends(get_db)):
-    tmp_user = crud.get_user_by_userid(user_id=user.id,db=db)
-    if(tmp_user == None):
-        crud.create_user(schemas.User(user_id=str(user.id),username=str(user.name)),db=db)
+async def get_user_id_by_username(user: User = Depends(get_session_user), db: Session = Depends(get_db)):
+    tmp_user = crud.get_user_by_userid(user_id=user.id, db=db)
+    if (tmp_user == None):
+        crud.create_user(schemas.User(user_id=str(user.id),
+                         username=str(user.name)), db=db)
     return user
 
 
 @app.get("/api")
-async def read_caffs(db: Session = Depends(get_db),user:User = Depends(get_session_user)):
-    caffs = crud.get_caffs(db)
-    return caffs
+async def read_caffs(tag: str | None, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
+    if tag is None:
+        caffs = crud.get_caffs(db)
+        return caffs
+    caff_ids = crud.get_caff_ids_by_tag(tag, db)
+    ret: list = []
+    for x in caff_ids:
+        caff_id = vars(x)
+        print(x)
+        print(caff_id)
+        caff = crud.get_caff_by_id(caff_id["collection_id"], db)
+        if caff not in ret:
+            ret.append(caff)
+    return ret
 
 
 @app.post("/api")
@@ -136,34 +150,21 @@ async def read_caff_by_id_with_comments(caff_id: int, db: Session = Depends(get_
         raise HTTPException(
             status_code=400, detail="There is not a Caff with id: "+str(caff_id))
     comments = crud.get_comments_by_collection_id(collection_id=caff_id, db=db)
-    comment_dict=[]
+    comment_dict = []
     for comment in comments:
         print(vars(comment))
-        author = crud.get_user_by_userid(db=db,user_id=comment.author_id)
+        author = crud.get_user_by_userid(db=db, user_id=comment.author_id)
         if (author == None):
             username = "Anonymus"
         else:
             username = author.username
-        comment_element={"text":comment.text,"username":username,"date":comment.date,"id":comment.id}
+        comment_element = {"text": comment.text, "username": username,
+                           "date": comment.date, "id": comment.id}
         comment_dict.append(comment_element)
     caff_dict = vars(caff)
     caff_dict["comments"] = []
     caff_dict["comments"] += comment_dict
     return caff_dict
-
-
-@app.get("/api/search?tag=")
-async def get_caffs_by_tag(tag: str, db: Session = Depends(get_db)):
-    caff_ids = crud.get_caff_ids_by_tag(tag, db)
-    ret: list = []
-    for x in caff_ids:
-        caff_id = vars(x)
-        print(x)
-        print(caff_id)
-        caff = crud.get_caff_by_id(caff_id["collection_id"], db)
-        if caff not in ret:
-            ret.append(caff)
-    return ret
 
 
 @app.get("/api/{caff_id}/comments/{comment_id}")
@@ -210,20 +211,20 @@ async def delete_comment_by_id(caff_id: int, db: Session = Depends(get_db)):
     if (caff == None):
         raise HTTPException(
             status_code=400, detail="There is not a Caff with id: "+str(caff_id))
-    is_successful = crud.delete_caff_by_id (caff_id,db)
+    is_successful = crud.delete_caff_by_id(caff_id, db)
     if is_successful:
         return response.ok
     else:
         raise HTTPException(
             status_code=400, detail="Could not delete Caff with id: "+str(caff_id))
-        
+
 
 @app.delete("/api/{caff_id}/comments/{comment_id}")
-async def delete_comment_by_id(caff_id: int, comment_id: int, db: Session = Depends(get_db),user:User = Depends(get_session_user)):
-    if(user.role != "ADMIN"):
+async def delete_comment_by_id(caff_id: int, comment_id: int, db: Session = Depends(get_db), user: User = Depends(get_session_user)):
+    if (user.role != "ADMIN"):
         raise HTTPException(
             status_code=403, detail="ADMIN only functionality")
-        return None        
+        return None
     caff = crud.get_caff_by_id(caff_id, db=db, skip=0)
     if (caff == None):
         raise HTTPException(
