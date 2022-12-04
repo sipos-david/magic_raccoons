@@ -2,11 +2,11 @@ import { useSession, signOut, signIn } from "next-auth/react";
 import Link from "next/link";
 import Image from "next/image";
 import { useEffect } from "react";
+import { useUser } from "../context/userContext";
 
 export default function Header() {
   const { data: session } = useSession();
-
-  // TODO http://localhost:8080/realms/caffshop/account/#/ navigáció a névre kattintva
+  const { user } = useUser();
 
   useEffect(() => {
     if (session?.error === "RefreshAccessTokenError") {
@@ -14,10 +14,10 @@ export default function Header() {
     }
   }, [session]);
 
-  const navs = [
-    { title: "Feltöltés", href: "/upload" },
-    { title: "Események", href: "/logs" },
-  ];
+  const navs = [{ title: "Feltöltés", href: "/upload" },];
+  if (user?.role === "ADMIN") {
+    navs.push({ title: "Események", href: "/logs" });
+  }
 
   if (session) {
     return (
@@ -34,14 +34,18 @@ export default function Header() {
         </nav>
         <section className="flex grow flex-col items-end">
           <div className="flex flex-row items-center">
-            <span className="text-lg">
-              {session.user?.name}
-            </span>
-            <Image className="ml-2 w-6 h-6" src="/admin.svg" alt="Admin privileges icon" width={24} height={24} />
+            <Link href="http://localhost:8080/realms/caffshop/account/#/">
+              <span className="text-lg">
+                {session.user?.name}
+              </span>
+            </Link>
+            {user && user.role === "ADMIN" &&
+              <Image className="ml-2 w-6 h-6" src="/admin.svg" alt="Admin privileges icon" width={24} height={24} />
+            }
           </div>
           <button onClick={() => signOut()} className="text-gray-400 hover:text-red-500">Kilépés</button>
         </section>
-      </header>
+      </header >
     );
   }
   return (
