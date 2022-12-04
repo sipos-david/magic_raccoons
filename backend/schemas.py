@@ -38,6 +38,7 @@ class Caff(CaffBase):
 
 class Log(BaseModel):
     text:str
+    level:str
     date:datetime
     author_id:int
 

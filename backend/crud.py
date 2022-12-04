@@ -100,6 +100,7 @@ def get_logs(db:Session):
 
 def create_log(log:schemas.Log,db:Session):
     model_log=models.Log(text=log.text
+                        ,level=log.level
                         ,date=log.date
                         ,author_id=log.author_id)
     db.add(model_log)
