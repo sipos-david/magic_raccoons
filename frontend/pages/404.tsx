@@ -2,6 +2,8 @@ import { NextPage } from "next";
 import Header from "../components/Header";
 
 const FourOhFour: NextPage = () => {
+  // TODO ui csinosítás
+
   return (
     <>
       <Header />

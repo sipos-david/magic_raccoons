@@ -2,22 +2,19 @@ import { NextPage } from "next";
 import { ChangeEvent, MouseEvent, useState } from "react";
 import Header from "../components/Header";
 import { useSnackbar } from "../context/snackbarContext";
+import useMutate from "../hooks/useMutate";
 
 const Upload: NextPage = () => {
   const [fileSelected, setFileSelected] = useState<File | undefined>();
   const { showSnackbar } = useSnackbar();
+  const { mutate } = useMutate();
 
   const onClickHandler = (event: MouseEvent<HTMLButtonElement>) => {
     event.preventDefault();
     if (fileSelected) {
-      const url = "http://localhost:8000/upload_file";
       const form = new FormData();
       form.append("file", fileSelected);
-      fetch(url, {
-        method: "POST",
-        mode: "cors",
-        body: form
-      }).then((response) => {
+      mutate("/upload_file", "POST", form, false)?.then((response) => {
         if (response.ok) {
           showSnackbar({ text: "Sikeres fájl feltöltés", severity: "success" });
         } else {

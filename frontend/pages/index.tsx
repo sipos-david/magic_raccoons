@@ -8,6 +8,10 @@ const Home: NextPage = () => {
   if (isError) return <div>Failed to load</div>;
   if (isLoading) return <div>Loading...</div>;
 
+  // TODO caff fájl keresés tagek alapján
+  // TODO .caff.tsx-ből ide migrálni
+  // TODO ui csinosítás
+
   return (
     <>
       <Header />

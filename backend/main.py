@@ -5,7 +5,7 @@ from fastapi import Depends, FastAPI, HTTPException, File, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.security import OAuth2PasswordBearer
-from auth import Auth, User
+from auth import Auth, Role, User
 
 from config import Settings
 
@@ -66,15 +66,20 @@ app.add_middleware(
 
 ALLOWED_EXTENSIONS = set(['caff'])
 
+# TODO user: User = Depends(get_session_user) minden hívás elé token ellenőrzés miatt, ahol kell role ellenőrzés
+# TODO eseményeket logolni
+# TODO caff fájl törlés
+# TODO caff fájl keresés query paraméterekkel
+# TODO nem használt endpoint-ok törlése
+# TODO kommmentekben leküldött userId helyett db-ből lekérdezni vagy Anonymous ha nincs
+# TODO belépett felhasználót lementeni db-ben ha nincs benne
+
 
 @app.get("/api/logs")
-async def get_logs(db: Session = Depends(get_db)):
+async def get_logs(db: Session = Depends(get_db), user: User = Depends(get_session_user)):
+    if user.role != Role.ADMIN:
+        raise HTTPException(status_code=403, detail="Forbidden")
     return crud.get_logs(db)
-
-
-@app.post("/api/logs")
-async def create_log(log: schemas.Log, db: Session = Depends(get_db)):
-    return crud.create_log(log, db)
 
 
 @app.get("/api/users")
@@ -234,8 +239,9 @@ def parse_caff(db: Session, filename: str, dir: str):
     output = subprocess.run(cmd, shell=True)
 
     if output.returncode != 0:
-        remove ( "/caff/backend/data/"+filename)
-        raise HTTPException(status_code=422, detail="The content of the uploaded file did not fit the CAFF file format. Upload did not complete.")
+        remove("/caff/backend/data/"+filename)
+        raise HTTPException(
+            status_code=422, detail="The content of the uploaded file did not fit the CAFF file format. Upload did not complete.")
 
     f = open(dir+"/metadata.json", "r")
     metadata = load(f)

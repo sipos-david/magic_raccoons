@@ -1,9 +1,12 @@
 import { useSession, signOut, signIn } from "next-auth/react";
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect } from "react";
 
 export default function Header() {
   const { data: session } = useSession();
+
+  // TODO http://localhost:8080/realms/caffshop/account/#/ navigáció a névre kattintva
 
   useEffect(() => {
     if (session?.error === "RefreshAccessTokenError") {
@@ -14,7 +17,7 @@ export default function Header() {
   const navs = [
     { title: "Feltöltés", href: "/upload" },
     { title: "Események", href: "/logs" },
-    { title: "Tételek",   href: "/caff"}//TODO találóbb név
+    { title: "Tételek", href: "/caff" }//TODO találóbb név
   ];
 
   if (session) {
@@ -31,9 +34,12 @@ export default function Header() {
             </Link>)}
         </nav>
         <section className="flex grow flex-col items-end">
-          <span className="text-lg">
-            {session.user?.name}
-          </span>
+          <div className="flex flex-row">
+            <span className="text-lg">
+              {session.user?.name}
+            </span>
+            <Image className="ml-2" src="/admin.svg" alt="Admin privileges icon" width={24} height={24} />
+          </div>
           <button onClick={() => signOut()} className="text-gray-400 hover:text-red-500">Kilépés</button>
         </section>
       </header>
