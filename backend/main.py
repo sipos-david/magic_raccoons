@@ -140,7 +140,7 @@ async def read_caff_by_id_with_comments(caff_id: int, db: Session = Depends(get_
     for comment in comments:
         print(vars(comment))
         author = crud.get_user_by_userid(db=db,user_id=comment.author_id)
-        if (caff == None):
+        if (author == None):
             username = "Anonymus"
         else:
             username = author.username
